@@ -1,0 +1,59 @@
+{
+	"DroneList": [
+		{
+			"Drone": {
+				"id": 0,
+				"batteryPercentage": 99,
+				"isWorking": 0,
+				"coords": {
+					"x": "10.2",
+					"y": "55.35"
+				}
+			}
+		},
+		{
+			"Drone": {
+				"id": 1,
+				"batteryPercentage": 72,
+				"isWorking": 0,
+				"coords": {
+					"x": "10.507",
+					"y": "55.3"
+				}
+			}
+		},
+		{
+			"Drone": {
+				"id": 2,
+				"batteryPercentage": 82,
+				"isWorking": 0,
+				"coords": {
+					"x": "10.5181911",
+					"y": "55.3359184"
+				}
+			}
+		},
+		{
+			"Drone": {
+				"id": 3,
+				"batteryPercentage": 82,
+				"isWorking": 0,
+				"coords": {
+					"x": "10.3634733",
+					"y": "55.321732999999995"
+				}
+			}
+		},
+		{
+			"Drone": {
+				"id": 4,
+				"batteryPercentage": 82,
+				"isWorking": 0,
+				"coords": {
+					"x": "10.1610465",
+					"y": "55.466138400"
+				}
+			}
+		}
+	]
+}

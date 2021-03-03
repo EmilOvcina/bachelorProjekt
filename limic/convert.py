@@ -13,6 +13,9 @@ CONFIG = [
         ("npz",{'help':"convert to NPZ graph",'args':[
             INDIRECT,RESCALE,PENALIZE,IN,OUT
         ]}),
+        ("dot",{'help':"convert to DOT graph",'args':[
+            IN,OUT
+        ]})
     ]}),
     ("gt",{'help':"convert GT graph",'args':[
         ("nx",{'help':"convert to NX graph",'args':[
@@ -28,6 +31,11 @@ CONFIG = [
         ]}),
         ("gt",{'help':"convert to GT graph",'args':[
             RESCALE,PENALIZE,IN,OUT
+        ]})
+    ]}),
+    ("dot",{'help':"convert DOT graph",'args':[
+        ("nx",{'help':"convert to NX graph",'args':[
+            IN,OUT
         ]})
     ]}),
     ("cache",{'help':"convert pickled cache",'args':[
@@ -174,6 +182,34 @@ def convert_nx_npz(file_name_in,file_name_out,indirect=False,rescale=False,penal
     end('')
     file_size(file_name_out)            
 
+def convert_nx_dot(file_name_in,file_name_out):
+    from limic.util import start, end, file_size, load_pickled, check_overwrite
+    from networkx.drawing.nx_pydot import write_dot
+    if not check_overwrite(file_name_in,file_name_out):
+        return
+    start("Loading graph from",file_name_in)
+    g = load_pickled(file_name_in)
+    end('')
+    file_size(file_name_in)
+    start("Saving to",file_name_out)
+    write_dot(g,file_name_out)
+    end('')
+    file_size(file_name_out)
+    
+def convert_dot_nx(file_name_in,file_name_out):
+    from limic.util import start, end, file_size, save_pickled, check_overwrite
+    from networkx.drawing.nx_pydot import read_dot
+    if not check_overwrite(file_name_in,file_name_out):
+        return
+    start("Loading graph from",file_name_in)
+    g = read_dot(file_name_in)
+    end('')
+    file_size(file_name_in)
+    start("Saving to",file_name_out)
+    save_pickled(file_name_out,g)
+    end('')
+    file_size(file_name_out)
+    
 def convert_gt_nx(file_name_in,file_name_out,penalize=20):
     from limic.util import start, end, file_size, load_gt, save_pickled, check_overwrite
     if not check_overwrite(file_name_in,file_name_out):

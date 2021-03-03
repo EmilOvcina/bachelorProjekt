@@ -177,11 +177,12 @@ def route_nx(file_name,source_id=None,target_id=None,out_file=None,visualize=Fal
     else:
         path = astar_nx(g,source_id,target_id)
     end()
-    start("Saving path to",out_file)
-    save_path(path,out_file,visualize)
-    end()
+    if not benchmark:
+        start("Saving path to",out_file)
+        save_path(path,out_file,visualize)
+        end()
     
-def astar_cnx(g,source_id=None,target_id=None):
+def astar_cnx(g,source_id=None,target_id=None,routes=None):
     from limic.util import locate_by_id, distance
     cs,node2closest,node2c = g.cs,g.node2closest,g.node2c
     if isinstance(source_id,tuple) and isinstance(target_id,tuple):
@@ -192,6 +193,8 @@ def astar_cnx(g,source_id=None,target_id=None):
         ids = list(map(lambda x:x[0],nodes))
         source, target = locate_by_id(ids,source_id,target_id)
         source, target = nodes[source], nodes[target]
+        if not routes is None:
+            routes.append((source,target))
     if source not in node2closest:
         if target in node2closest or node2c[source] != node2c[target]:
             cost = dist = distance(source,target)
@@ -233,20 +236,29 @@ def astar_cnx(g,source_id=None,target_id=None):
     return min(paths)
 
 def route_cnx(file_name,source_id=None,target_id=None,out_file=None,visualize=False,benchmark=None):
-    from limic.util import start, end, load_pickled, save_path
+    from limic.util import start, end, load_pickled, save_path, save_pickled
     start("Loading from",file_name)
     g = load_pickled(file_name)
     end()
     start("Routing using condensed NX")
-    if benchmark:
+    if benchmark and out_file:
+        routes = []
+        for i in range(int(benchmark)):
+            path = astar_cnx(g,None,None,routes)
+    elif benchmark:
         for source, target in load_pickled(benchmark):
             path = astar_cnx(g,(source,),(target,))
     else:
         path = astar_cnx(g,source_id,target_id)
     end()
-    start("Saving path to",out_file)
-    save_path(path,out_file,visualize)
-    end()
+    if benchmark and out_file:
+        start("Saving routes to",out_file)
+        save_pickled(out_file,routes)
+        end()
+    elif not benchmark:
+        start("Saving path to",out_file)
+        save_path(path,out_file,visualize)
+        end()
 
 def astar_gt(g,source_id=None,target_id=None):
     from graph_tool.search import astar_search, AStarVisitor, StopSearch
@@ -427,3 +439,217 @@ def route_direct(file_name,source_id=None,target_id=None,out_file=None,overpass_
         replace(file_name_tmp,file_name)
         end('')
         file_size(file_name)
+
+
+"""
+VEHICLE ROUTING PROBLEM
+"""
+# TODO (3) Maybe separate astart (pathfinding) and vehicle routing in two files?
+# TODO (3) Maybe cache all found routes?
+
+# TODO (3) Where to store transformer? Maybe limic.utils?
+from pyproj import CRS, Transformer
+crs_4326 = CRS("WGS 84")
+crs_proj = CRS("EPSG:28992")
+transformer = Transformer.from_crs(crs_4326, crs_proj)
+
+# TODO (3) Where to put location object?
+# TODO (3) Expand into Tower & Drone objects instead?
+class Location():
+    def __init__(self, id, coords, order='latlon'):
+        self.id = id
+        if order in ['latlon', 'xy']:
+            self.lat, self.lon = coords
+        elif order in ['lonlat', 'yx']:
+            self.lon, self.lat = coords
+
+    def get_id(self):
+        return self.id
+
+    def get_coords(self, transform=None, order='latlon'):
+        lat = self.lat
+        lon = self.lon
+        if transform == "EPSG:28992":
+            lat, lon = transformer.transform(lat, lon)
+        if order in ["latlon", "yx"]:
+            return lat, lon
+        elif order in ["lonlat", "xy"]:
+            return lon, lat
+
+
+def vehicle_routing_problem(g, astar, tree, drones, towers):
+    """ Solves the Vehicle Routing Problem with set starts and arbritary ends.
+    Arguments:
+        g: is the graph
+        astar: is the astar function
+        tree: is the KDTree of towers
+        drones: list of drones available
+        towers: list of towers to visit
+    Returns:
+        { drone_id: { distance: int , path: [(coords), ...] }, ...}
+    """
+    from ortools.constraint_solver import routing_enums_pb2
+    from ortools.constraint_solver import pywrapcp
+    from itertools import combinations
+    from copy import copy
+
+    # TODO (2) Location deduplication (drones might be at a tower already)
+    # TODO (3) Look into weird behaviours, does astar overweigh line switches?
+    
+    def compute_distance_matrix(drones, towers):
+        """ Generate distance matrix with mock depot (free return)
+        Arguments:
+            drones: list of drones available (Location object)
+            towers: list of towers to visit (Location object)
+        Returns:
+            distanceMatrix: {(source, target): distance} where index-wise s <= t
+        
+        Note: Computation is optimized and assumes that:
+            * A->B = B->A
+            * A->A = 0
+            * A->depot = 0 (depot is last location)
+        """
+        from scipy.spatial import cKDTree as KDTree
+        
+        locations = drones + towers
+        paths = {}
+        dist_dict = {}
+        # Get distances and paths
+        for s, t in combinations(range(len(locations)), 2):
+            source = locations[s]
+            source_index = tree.query(source.get_coords( 
+                transform="EPSG:28992", order="latlon"))[1]
+            target = locations[t] # Target coords
+            target_index = tree.query(target.get_coords( 
+                transform="EPSG:28992", order="latlon"))[1]
+
+            distance, path = astar(g,(source,source_index),(target,target_index))
+            paths[(s,t)] = list(map(lambda x: (x[-2], x[-1]), path))
+            dist_dict[(s, t)] = int(distance)
+        # Build distance matrix ->
+        matrix = []
+        for x in range(len(locations) + 1):
+            row = []
+            for y in range(len(locations) + 1):
+                if x == y: row.append(0)# A->A = 0
+                elif len(locations) in [x, y]: row.append(0) # A->depot = 0
+                # A->B = B->A and dictionary only has smaller index first
+                elif x < y: row.append(dist_dict[(x,y)]) 
+                elif y < x: row.append(dist_dict[(y,x)])
+            matrix.append(row)
+        
+        return matrix, paths
+        
+    # TODO (2) Rewrite and make nicer
+    def create_data_model(drones, towers):
+        data = {}
+        data['distance_matrix'], data['path_cache'] = compute_distance_matrix(drones, towers)
+        data['num_vehicles'] = len(drones)
+        data['num_locations'] = len(data['distance_matrix'])
+        data['starts'] = list(range(data['num_vehicles'])) # Drones are first locations (change this later)
+        data['ends'] = [len(data['distance_matrix'])-1] * data['num_vehicles'] # End at depot index
+        return data
+
+    def distance_callback(from_index, to_index):
+        """Returns the distance between the two nodes. Uses the precomputed 
+        distance matrix."""
+        # Convert from routing variable Index to distance matrix NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return data['distance_matrix'][from_node][to_node]
+        
+    def generate_paths(data, manager, routing, solution):
+        """Prints solution on console."""
+        paths = {}
+        for drone_index in range(data['num_vehicles']):
+            drone_id = drones[drone_index].get_id()
+            index = routing.Start(drone_index)
+            route_distance = 0
+            path = []
+            while not routing.IsEnd(index):
+                previous_index = index
+                index = solution.Value(routing.NextVar(index))
+                if index >= (data['num_locations'] - 1): # break at depot
+                    break                
+                if previous_index < index: # Same direction as cache
+                    path += data['path_cache'][(previous_index, index)]
+                elif previous_index > index: # Opposite direciton as cache
+                    p = copy(data['path_cache'][(index, previous_index)])
+                    p.reverse()
+                    path += p 
+                route_distance += routing.GetArcCostForVehicle(
+                    previous_index, index, drone_index)
+            paths[drone_id] = {
+                'distance': route_distance,
+                'path': path
+            }
+        return paths
+        
+    def print_solution(data, manager, routing, solution):
+        """Prints solution on console."""
+        max_route_distance = 0
+        for vehicle_id in range(data['num_vehicles']):
+            index = routing.Start(vehicle_id)
+            plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
+            route_distance = 0
+            while not routing.IsEnd(index):
+                plan_output += ' {} -> '.format(manager.IndexToNode(index))
+                previous_index = index
+                index = solution.Value(routing.NextVar(index))
+                route_distance += routing.GetArcCostForVehicle(
+                    previous_index, index, vehicle_id)
+            plan_output += '{}\n'.format(manager.IndexToNode(index))
+            plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+            print(plan_output)
+            max_route_distance = max(route_distance, max_route_distance)
+        print('Maximum of the route distances: {}m'.format(max_route_distance))
+
+    """
+    Start of Vehicle Routing Problem Solver
+    """
+    #print(f"Finding a path to {len(towers)} towers for {len(drones)} drones.")
+    
+    data = create_data_model(drones, towers)
+    
+    # Create the routing index manager.
+    manager = pywrapcp.RoutingIndexManager(
+        #data['num_locations'],
+        len(data['distance_matrix']),
+        data['num_vehicles'],
+        data['starts'],
+        data['ends'])
+        
+    # Create Routing Model.
+    routing = pywrapcp.RoutingModel(manager)
+
+    # Register the transit callback (travel distance)
+    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+    # Define cost of each arc (travel distance equals the cost of travel)
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+
+    # Add Distance constraint, cummulative distance traveled
+    # TODO (2) Investigate why excluded in BP
+    dimension_name = 'Distance'
+    routing.AddDimension(
+        transit_callback_index,
+        0,  # no slack
+        200000,  # vehicle maximum travel distance
+        True,  # start cumul to zero
+        dimension_name)
+    distance_dimension = routing.GetDimensionOrDie(dimension_name)
+    distance_dimension.SetGlobalSpanCostCoefficient(100)
+
+    # Setting first solution heuristic.
+    # TODO (2) Investigate implementation in BP
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+
+    # Solve the problem.
+    solution = routing.SolveWithParameters(search_parameters)
+
+    # TODO (3) Consider solution format
+    if solution:
+        #print_solution(data, manager, routing, solution) 
+        return generate_paths(data, manager, routing, solution)
+    return "Failed to find solution!"

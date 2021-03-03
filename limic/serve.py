@@ -19,6 +19,26 @@ CONFIG = [
     ("npz",{'help':"start HTTP server for given GRAPH and rendered HTML file",'args':[SHOW,URL,NOBROWSER,HOST,PORT,PREFIX,RHOST,RPORT,RPREFIX,GRAPH,HTML]})
 ]
 
+import kml2geojson
+import pygeoj
+import geojson
+import shapely.wkt
+import requests
+overpass_url="http://caracal.imada.sdu.dk/overpass"
+
+class polygon:
+    def __init__(self, name):
+        self.name=name
+        self.polygon_list=[]
+
+    def add_polygon(self, item):
+        self.polygon_list.append(item)
+
+class pylon_item:
+    def __init__(self,LAT,LAN):
+        self.LAT=LAT
+        self.LAN=LAN
+
 def serve_auto(countries,host="localhost",port=5000,prefix="",osm=False,url=None,show=False,no_browser=False,r_host="localhost",r_port=5000,r_prefix="",conserve_mem=False):
     from limic.download import common, download_graph, download_merged, download_osm
     from limic.init import extract_osm_all, merge_all
@@ -64,7 +84,7 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
     from pyproj import CRS, Transformer
     from flask_cors import CORS
     start("Initializing KD-Tree")
-    crs_4326 = CRS("WGS84")
+    crs_4326 = CRS("EPSG:4326")
     crs_proj = CRS("EPSG:28992")
     transformer = Transformer.from_crs(crs_4326, crs_proj)
     tree = KDTree(list(map(lambda x:transformer.transform(x[1],x[2]),nodes)))
@@ -72,21 +92,164 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
 
     start("Setting up the app")
     app = Flask("LiMiC")
-    CORS(app);
+    CORS(app)
 
     @app.route(prefix+"/")
     def hello():
         return open(html_file).read()
 
-    @app.route(prefix + "/no_zone")
-    def no_zone():
-        file = open("../leaflet/data/no_zone.geojson", "r")
+    
+    
+    @app.route(prefix+"/graph")
+    def graph():
+        file = open("../leaflet/data/export1.geojson","r")
         return file.read()
 
-    @app.route(prefix + "/graph")
-    def graph():
-        file = open("../leaflet/data/export1.geojson", "r")
-        return file.read()
+
+    def droneluftum_download(access_token=None):
+        if access_token is None:
+            access_token = droneluftum_auth()
+
+        url = "https://www.droneluftrum.dk/api/uaszones/exportKmlUasZones?Authorization=Bearer" + access_token
+        response = requests.request("GET", url)
+            # TODO: exception of request breaks
+        return response.text.encode('utf8')
+
+    def droneluftum_auth():
+        url = "https://www.droneluftrum.dk/oauth/token?grant_type=client_credentials"
+        headers = {
+                # Authorization value captured from browser. Utf-8 string:
+                # "NaviairDroneWeb:NaviairDroneWeb" encoded to base64
+                'Authorization': 'Basic TmF2aWFpckRyb25lV2ViOk5hdmlhaXJEcm9uZVdlYg=='
+        }
+        response = requests.request("POST", url, headers=headers)
+            # access_token expires in ~12h
+            # TODO: exceptions if request breaks
+        return response.json()['access_token']
+
+    def prune_ids_nx(g,delete_ids):
+        to_delete = []
+        delete_ids = set(delete_ids)
+        for n in g.nodes():
+            if n[0] in delete_ids:
+                to_delete.append(n)
+        for n in to_delete:
+            g.remove_node(n)
+        return g
+    def prune_graph(towerList):
+        # fill kdtree
+        polygon_pairs = list(map(float,towerList))
+        #print(polygon_pairs)
+        polygon_pairs = list(zip(polygon_pairs[::2], polygon_pairs[1::2]))
+        from limic.overpass import nodes_in_geometry, set_server
+        start("Query server for nodes in polygon")
+        set_server(overpass_url)
+        nodes = nodes_in_geometry(polygon_pairs)
+        end('')
+        status(len(nodes))
+        start("Pruning graph")
+        pruned_graph = prune_ids_nx(g,nodes)
+        end()
+        return pruned_graph
+
+    @app.route(prefix+"/prune")
+    def prune():
+        #counting number of pruning
+        count=0
+    # get body of request and make sure it is via post
+        kml = droneluftum_download()
+        # make a copy of original nx graph as current nx graph
+        g_original=g.copy()
+        #parse KML file
+        with open('export.kml', 'wb') as f:
+            f.write(kml)
+        from pykml import parser
+        with open('export.kml') as fobj:
+           KLM_file = parser.parse(fobj).getroot().Document
+        for pm in KLM_file.iterchildren():
+              if hasattr(pm, 'Polygon'):
+                coordinates = pm.Polygon.outerBoundaryIs.LinearRing.coordinates.pyval
+                #coordinates=coordinates.replace('0.0 ','')
+                coordinates=coordinates.split(',')
+                 #for j in range(len(coordinates)-2, 0, -1):
+                towerList = []
+                lenght=len(coordinates)
+                #if (lenght>=173):
+                    #lenght=173
+                    #print("Changed"+pm.name)
+                print(lenght)
+                print(pm.name)
+                for p in range(0,len(coordinates)-1,2):
+                        coordinates[p+1]=coordinates[p+1].strip()   
+                        if p!=0:
+                         coordinates[p]=coordinates[p].split()  
+                         towerList.append(float(coordinates[p+1]))
+                         towerList.append(float(coordinates[p][1])) 
+                        else:
+                            towerList.append(float(coordinates[p+1]))
+                            towerList.append(float(coordinates[p]))
+
+                count=count+1
+                print("pruning"+str(count))
+                      # fill kdtree
+                polygon_pairs = list(map(float,towerList))
+                #print(polygon_pairs)
+                polygon_pairs = list(zip(polygon_pairs[::2], polygon_pairs[1::2]))
+                from limic.util import kdtree, nodes_in_geometry
+                start("Building kd-tree from nodes")
+                tree = kdtree(g.nodes(),get_latlon=lambda x:(x[1],x[2]))
+                end()
+                start("Querying tree for nodes in polygon")
+                nodes = nodes_in_geometry(tree,polygon_pairs)
+                end('')
+                status(len(nodes))
+                start("Pruning graph")
+                for n in nodes:
+                    g.remove_node(n)
+                #h = g
+                end()
+
+
+
+
+
+                #start("Query server for nodes in polygon")
+                #set_server(overpass_url)
+                #nodes = nodes_in_geometry(polygon_pairs)
+                #end('')
+                #status(len(nodes))
+                #start("Pruning graph")
+                #to_delete = []
+                #delete_ids = set(nodes)
+                #for n in g.nodes():
+                #    if n[0] in delete_ids:
+                 #       to_delete.append(n)
+                #for n in to_delete:
+                #    g.remove_node(n)
+                #pruned_graph = prune_ids_nx(g,nodes)
+                #print("Done")
+                #end()
+                #break
+
+              #pruned_graph=prune_graph(towerList)
+              
+              #break
+       
+              
+
+        #servve GeoJson graph
+        from geojson import Feature, Point, LineString, FeatureCollection, dumps
+        fs = []
+        for n in g.nodes():
+            f = Feature(geometry=Point((n[1],n[2])))
+            fs.append(f)
+        for nf,nt in g.edges():
+            f = Feature(geometry=LineString([(nf[1],nf[2]),(nt[1],nt[2])]))
+            fs.append(f)
+        fc = FeatureCollection(fs)
+        return dumps(fc)
+      
+        
 
     @app.route(prefix+"/tower")
     def tower():
@@ -120,6 +283,68 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
         end()
         return res
     end()
+
+    # TODO (3) Rewrite data transfer with web interface (use POST & body)
+    @app.route(prefix+"/vrp")
+    def tsp():
+        from limic.route import vehicle_routing_problem, Location
+
+        allDrones = []
+        i = 0
+        newDrone = list(request.args.getlist('drones[' + str(i) + '][]'))
+        while(newDrone != []):
+            i+=1
+            allDrones.append(newDrone)
+            newDrone = list(request.args.getlist('drones[' + str(i) + '][]'))
+        drones = list(map(lambda x: Location(x[0], (x[2], x[3]), order='lonlat'), allDrones))
+
+        for dr in drones:
+            print(dr.get_coords())
+
+        allTowers = []
+        i = 0
+        newTower = list(request.args.getlist('towers[' + str(i) + '][]'))
+        while(newTower != []):
+            i+=1
+            allTowers.append(newTower)
+            newTower = list(request.args.getlist('towers[' + str(i) + '][]'))
+        towers = list(map(lambda x: Location(x[0], (x[1], x[2]), order='lonlat'), allTowers))
+
+        for to in towers:
+            print(to.get_coords())
+
+        paths = vehicle_routing_problem(g, astar, tree, drones, towers)
+        res = jsonify(paths)
+        return res
+
+    @app.route(prefix+"/selectAll")
+    def selectAll():
+        import sys
+        sys.path.append("..")
+        from BP2_TSP.astar import selectAllTowersOnPath, pylon  #sys path append added to use tsp solver from parent directory
+
+        first = list(request.args.getlist('first[]'))
+        second = list(request.args.getlist('second[]'))
+
+        path = selectAllTowersOnPath(first, second)
+        res = jsonify(path=path)
+        return res
+
+    @app.route(prefix+"/no_zone")
+    def no_zone():
+        file = open("../leaflet/data/no_zone.geojson","r")
+        return file.read()
+
+    @app.route(prefix+"/dronelist")
+    def dronelist():
+        file = open("../leaflet/data/dronelist.json","r")
+        return file.read()
+
+    @app.route(prefix+"/marker")
+    def marker():
+        from flask import send_file
+        return send_file("../leaflet/data/marker.png")
+
 
     class OpenThread(Thread):
         def run(self):

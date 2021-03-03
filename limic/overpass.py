@@ -2,6 +2,7 @@ from requests import get
 from limic.util import distance, options
 from dogpile.cache import make_region
 
+
 server = "http://caracal.imada.sdu.dk/overpass"
 def set_server(base_url):
     if base_url is not None:

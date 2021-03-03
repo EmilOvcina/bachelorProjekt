@@ -5,7 +5,7 @@ COUNTRIES=["Faroe Islands","Guernsey","Isle of Man"]
 OSM_COUNTRIES=["andorra","azores"]
 IDSS=[(5164034601,5163680824),(920411192,920412407),(2197735231,2197735192)]
 POLYGON=[54.4,10.4,54.5,10.4,54.5,10.5,54.4,10.5]
-PACKAGES="requests,numpy,dogpile.cache,networkx,graph_tool,dbm.gnu,shapely,folium,flask,scipy,pyproj,setproctitle"
+PACKAGES="requests,numpy,dogpile.cache,networkx,graph_tool,dbm.gnu,shapely,folium,flask,scipy,pyproj,setproctitle,pydot"
 
 def install(package):
     from subprocess import call

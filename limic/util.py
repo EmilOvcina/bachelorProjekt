@@ -70,7 +70,8 @@ def nodes_in_geometry(tree,polygon):
     radius = distance(southwest,middle)
     candidates = tree.query(middle,radius)
     get_latlon = tree.get_latlon
-    return [candidate for candidate in candidates if Point(*get_latlon(candidate)).within(Polygon(polygon))]
+    p_polygon = Polygon(polygon)
+    return [candidate for candidate in candidates if Point(*get_latlon(candidate)).within(p_polygon)]
 def bounds_center(polygon):
     min_lat = min_lon = float('inf')
     max_lat = max_lon = -float('inf')
@@ -88,7 +89,7 @@ class kdtree():
             self.transformer = transformer
         else:
             from pyproj import CRS, Transformer
-            self.transformer = Transformer.from_crs(CRS("WGS84"),CRS("EPSG:28992"))
+            self.transformer = Transformer.from_crs(CRS("EPSG:4326"),CRS("EPSG:28992"))
         if nodes:
             from scipy.spatial import cKDTree as KDTree
             self.nodes = list(nodes)

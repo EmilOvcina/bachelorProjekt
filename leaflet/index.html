@@ -83,7 +83,10 @@
     var nozoneLayer;
     
     var selectedTowers = [];
+    
+    var drone_dict = {};
     var drones = [];
+
     var routeLayer;
     
     var selectStyle = {
@@ -159,15 +162,38 @@
         
         selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
         
-        let d1 = [1, 55.37279029999999, 10.263379700000002];
-        drones.push(d1);
-        let d2 = [99, 55.37279029999999, 10.283379700000002];
-        drones.push(d2);
-        
+
         droneLayer = new L.LayerGroup().addTo(myLayer);
-        drones.forEach(function(d) {
-            new L.circleMarker([d[1], d[2]], droneStyle).addTo(droneLayer);
-        })
+
+        $.getJSON("http://127.0.0.1:5000/dronelist", function(json) {
+            json["DroneList"].forEach(function(droneEntry) {
+                var drone = droneEntry["Drone"];
+                drone_dict[drone["id"]] = {
+                    id: drone["id"],
+                    x: drone["coords"]["x"],
+                    y: drone["coords"]["y"],
+                    work: drone["isWorking"],
+                    batteryPercentage: drone["batteryPercentage"]
+                };
+            });
+        }).done(function (data) {
+            console.log(drone_dict)
+
+            for(var key in drone_dict) {
+                new L.circleMarker([drone_dict[key].y, drone_dict[key].x], droneStyle).addTo(droneLayer);
+            }
+
+
+        }); 
+
+        // let d1 = [1, 55.37279029999999, 10.263379700000002];
+        // drones.push(d1);
+        // let d2 = [99, 55.37279029999999, 10.283379700000002];
+        // drones.push(d2);
+
+            // Object.keys(drone_dict).forEach(function(d) {
+            //     new L.circleMarker([d[1], d[2]], droneStyle).addTo(droneLayer);
+            // })     
         
 
         map.attributionControl.setPrefix('');
@@ -218,17 +244,35 @@
         });  
     }
     
-    
-    
-    
     function route() {
         var drns = [];  
         var routePromises = [];
         
+        
+
         const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
-        for(var i = 0; i < drones.length; i++) {
-            let id = drones[i][0];
-            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drones[i][1], drones[i][2]));
+
+        // for(var key in drone_dict)
+        // {
+        //     console.log(key);
+        //     var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[key].y, drone_dict[key].x));
+        //     var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
+        //         .done(function(data) {
+        //             drns.push([key+"", data.tower[0], data.tower[2], data.tower[1]]);
+        //             selectedTowers = uniq(selectedTowers);
+        //         });
+        //     routePromises.push(request);
+        // }
+
+        var length = (Object.keys(drone_dict).length);
+
+        for(var i = 0; i < length; i++) {
+            let id = drone_dict[i].id;
+    
+    
+            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].y, drone_dict[i].x));
+    
+
             var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
                 .done(function(data) {
                     //selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
@@ -240,16 +284,29 @@
         }
 
         $.when.apply(null, routePromises).done(data => {
+            var shortestPath = Infinity;
+            var shortestDrone;
+
             if(drns.length > 0) {
                 console.log(drns);
                 console.log(selectedTowers);
                 
                 $.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drns,'towers':selectedTowers})
                     .done(function(data) {
+                        var shortestPath = Infinity;
+                        var shortestDrone;
+                        
                         for(drone in data) {
                             if(data[drone].distance > 0) {
-                                routeLayer = new L.polyline(data[drone].path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(myLayer);
+                                if(shortestPath > data[drone].distance) {
+                                    shortestPath = data[drone].distance;
+                                    shortestDrone = drone;
+                                }
                             }
+                        }
+                        console.log(data)
+                        if(shortestPath !== Infinity) {
+                            routeLayer = new L.polyline(data[shortestDrone].path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(myLayer);
                         }
                 });
             }

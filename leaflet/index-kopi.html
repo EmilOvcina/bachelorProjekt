@@ -73,7 +73,7 @@
     var nozonerender = 1;
     var towerrender = 1;
     var dronerender = 1;
-    var routerender = 0;
+    var routerender = 1;
     
     var norender = "https://upload.wikimedia.org/wikipedia/en/b/ba/Red_x.svg";
     var yesrender = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Checkmark_green.svg";
@@ -83,7 +83,10 @@
     var nozoneLayer;
     
     var selectedTowers = [];
+    
+    var drone_dict = {};
     var drones = [];
+
     var routeLayer;
     
     var selectStyle = {
@@ -101,6 +104,9 @@
             zoom: 8,
             renderer: L.canvas()
         });
+        
+        map.createPane("drones");
+        map.getPane("drones").style.zIndex = 1000;
         
         map.createPane("routes");
         map.getPane("routes").style.zIndex = 900;
@@ -139,7 +145,8 @@
             color: "#000",
             weight: .51,
             opacity: 1,
-            fillOpacity: 0.8
+            fillOpacity: 0.8,
+            pane: "drones"
         };
 
         graphLayer = new L.GeoJSON(graph, {
@@ -155,21 +162,40 @@
         
         selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
         
-        let d1 = [1, 55.367600, 10.27273];
-        drones.push(d1);
-        
+
         droneLayer = new L.LayerGroup().addTo(myLayer);
-        drones.forEach(function(d) {
-            new L.circleMarker([d[1], d[2]], droneStyle).addTo(droneLayer);
-        })
+
+        $.getJSON("http://127.0.0.1:5000/dronelist", function(json) {
+            json["DroneList"].forEach(function(droneEntry) {
+                var drone = droneEntry["Drone"];
+                // drone_dict[drone["id"]] = {
+                //     id: drone["id"],
+                //     x: drone["coords"]["x"],
+                //     y: drone["coords"]["y"],
+                //     work: drone["isWorking"],
+                //     batteryPercentage: drone["batteryPercentage"]
+                // };
+            });
+        }).done(function (data) {
+            console.log(drone_dict)
+
+            for(var key in drone_dict) {
+                new L.circleMarker([drone_dict[key].y, drone_dict[key].x], droneStyle).addTo(droneLayer);
+            }
+
+
+        }); 
+
+        // let d1 = [1, 55.37279029999999, 10.263379700000002];
+        // drones.push(d1);
+        // let d2 = [99, 55.37279029999999, 10.283379700000002];
+        // drones.push(d2);
+
+            // Object.keys(drone_dict).forEach(function(d) {
+            //     new L.circleMarker([d[1], d[2]], droneStyle).addTo(droneLayer);
+            // })     
         
-        
-        
-        
-        
-        
-        
-        
+
         map.attributionControl.setPrefix('');
         var denmark = new L.LatLng(55.94612, 10.48645); 
         map.setView(denmark, 8);
@@ -202,7 +228,7 @@
 
             $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
                 .done(function(data) {
-                selectedTowers.push([data.tower[0], data.tower[1], data.tower[2]]);
+                selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
                 new L.circleMarker([data.tower[1], data.tower[2]], selectStyle).addTo(selectTowerLayer);
             })
         });
@@ -210,59 +236,79 @@
         selectTowerLayer.on("click", function(e) {
             var lat = e.layer._latlng.lat;
             var lng = e.layer._latlng.lng;  
-            var check = lat+","+lng;
-            for(var i = 0; i < selectedTowers.length; i++) {
-                if (selectedTowers[i].toString() === check) {
-                    selectedTowers.splice(i,1);
-                }
-            }
-            selectTowerLayer.removeLayer(e.layer);
-            console.log(selectedTowers);
-        });
-        
-        
+            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                .done(function(data) {
+                selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
+                selectTowerLayer.removeLayer(e.layer);
+            })
+        });  
     }
     
     function route() {
-        var drns = [];        
+        var drns = [];  
+        var routePromises = [];
+        
         const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
 
-        for(var i = 0; i < drones.length; i++) {
-            let id = drones[i][0];
-            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(55.367600, 10.27273));
-        
-            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
-                .done(function(data) {
-                
-                console.log(data);
-                selectedTowers.push([data.tower[0], data.tower[1], data.tower[2]]);
-                new L.circleMarker([data.tower[1], data.tower[2]], selectStyle).addTo(selectTowerLayer);
-            })
-        }
-        
-        
-        
-        //$.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drones,'towers':selectedTowers})
-        //    .done(function(data) {
-            
-            //drawRoute()
-        //})
-    }
-    
-    function drawRoute(source, target) {
-        $.ajax("http://127.0.0.1:5000/route?source[lat]=" + source[0]+"&source[lng]=" + source[1] +
-                         "&target[lat]=" + target[0] + "&target[lng]=" + target[1])
-        .done(function(path) {
-            pathPoints = []
-            for(var i = 0; i < path.path[1].length; i++) {
-                pathPoints.push([path.path[1][i][4], path.path[1][i][5]]);
-            }
-             
-            routeLayer = new L.polyline(pathPoints, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(myLayer);
+        // for(var key in drone_dict)
+        // {
+        //     console.log(key);
+        //     var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[key].y, drone_dict[key].x));
+        //     var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
+        //         .done(function(data) {
+        //             drns.push([key+"", data.tower[0], data.tower[2], data.tower[1]]);
+        //             selectedTowers = uniq(selectedTowers);
+        //         });
+        //     routePromises.push(request);
+        // }
 
+        for(var i = 0; i < drones.length; i++) {
+            let id = drone[i][0];
+    
+            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drones[i][1], drones[i][2]));
+            var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
+                .done(function(data) {
+                    //selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
+                    //new L.circleMarker([data.tower[1], data.tower[2]], selectStyle).addTo(selectTowerLayer);
+                    drns.push([id+"", data.tower[0], data.tower[2], data.tower[1]]);
+                    selectedTowers = uniq(selectedTowers);
+            });
+            routePromises.push(request);
+        }
+
+        $.when.apply(null, routePromises).done(data => {
+            if(drns.length > 0) {
+                console.log(drns);
+                console.log(selectedTowers);
+                
+                $.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drns,'towers':selectedTowers})
+                    .done(function(data) {
+                        console.log(data)
+                        for(drone in data) {
+                            if(data[drone].distance > 0) {
+                                routeLayer = new L.polyline(data[drone].path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(myLayer);
+                            }
+                        }
+                });
+            }
         });
         
+
     }
+
+    function uniq(a) {
+        var uniID = [];
+        var unArr = [];
+        
+        for(var i = 0; i < a.length; i++) {
+            if(!uniID.includes(a[i][0])) {
+                uniID.push(a[i][0]);
+                unArr.push(a[i]);
+            }
+        }
+        return unArr;
+    }
+    
 </script>  
 </head>
 <body onLoad="javascript:init();">
@@ -283,7 +329,7 @@
 $("#noflyrender img").attr("src", yesrender);
 $("#towerrender img").attr("src", yesrender);
 $("#dronerender img").attr("src", yesrender);    
-$("#routerender img").attr("src", norender);    
+$("#routerender img").attr("src", yesrender);    
 
 $('#towerrender').click(function() {
     if(towerrender == 1) {
@@ -301,6 +347,18 @@ $('#towerrender').click(function() {
             $("#sidepanel ul li p").fadeIn(0);
         }
         towerrender = 1;
+    }
+});
+    
+$('#routerender').click(function() {
+    if(routerender == 1) {
+        $("#routerender img").attr("src", norender);
+        myLayer.removeLayer(routeLayer);
+        routerender= 0;
+    } else {
+        $("#routerender img").attr("src", yesrender);
+        myLayer.addLayer(routeLayer);
+        routerender = 1;
     }
 });
     
