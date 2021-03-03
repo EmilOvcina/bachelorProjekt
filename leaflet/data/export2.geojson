@@ -1,0 +1,51 @@
+var graph = {
+  "type": "FeatureCollection",
+  "generator": "overpass-ide",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2020-04-27T11:21:02Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/260219427"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.8969868,
+          56.6890243
+        ]
+      },
+      "id": "node/260219427"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/291760320",
+        "power": "tower"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.9526038,
+          54.6786684
+        ]
+      },
+      "id": "node/291760320"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/291760321",
+        "power": "tower"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.952728,
+          54.6743481
+        ]
+      },
+      "id": "node/291760321"
+    }]
+}

@@ -1,0 +1,351 @@
+<html>
+<head>
+<title>Emils Test</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+  integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+  crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://npmcdn.com/leaflet-geometryutil"></script>
+<script src="http://127.0.0.1:5000/no_zone"></script>
+<script src="http://127.0.0.1:5000/graph"></script>
+<style>
+    * {
+        margin: 0; padding: 0;
+    }
+    
+    #sidepanel {
+	   height: 100%;
+        width: 20%;
+        float: left;
+        background-color: #e2e2e2;
+        border-right: 1px solid #919191;
+    }
+    
+    #sidepanel h1 {
+        text-align: center;
+        font-family: sans-serif;
+        padding-top: 20px; 
+    }
+    
+    #sidepanel ul {
+	   list-style: none;
+        margin-top: 20px;
+    }
+    
+    #sidepanel ul li {
+	   padding: 20px;
+        background-color: white;
+        border-top: 1px solid #e2e2e2;
+        cursor: pointer;
+        position: relative;
+        -webkit-user-select: none;  /* Chrome all / Safari all */
+      -moz-user-select: none;     /* Firefox all */
+      -ms-user-select: none;      /* IE 10+ */
+      user-select: none; 
+    }
+    
+    #sidepanel ul li img{
+	   width: 30px;
+        float: right;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 20px;
+    }
+    
+    #sidepanel ul li p{
+	   float: right;
+        margin-right: 40px;
+    }
+
+    #map {
+        width: calc(80% - 1px); height: 100%; 
+        float: left;
+    }
+</style>
+<script language="javascript">
+    var map;
+
+    var nozonerender = 1;
+    var towerrender = 1;
+    var dronerender = 1;
+    var routerender = 1;
+    
+    var norender = "https://upload.wikimedia.org/wikipedia/en/b/ba/Red_x.svg";
+    var yesrender = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Checkmark_green.svg";
+    
+    var myLayer;
+    var graphLayer;
+    var nozoneLayer;
+    
+    var selectedTowers = [];
+    var drones = [];
+    var routeLayer;
+    
+    var selectStyle = {
+        radius: 8,
+        fillColor: "#00ff00",
+        color: "#000",
+        weight: .51,
+        opacity: .5,
+        fillOpacity: 0.8
+    };
+    
+    function init() {
+        map = new L.Map('map', {
+            center: [55.94612, 10.48645],
+            zoom: 8,
+            renderer: L.canvas()
+        });
+        
+        map.createPane("drones");
+        map.getPane("drones").style.zIndex = 1000;
+        
+        map.createPane("routes");
+        map.getPane("routes").style.zIndex = 900;
+
+        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        myLayer = new L.GeoJSON().addTo(map);
+        
+        var towerStyle = {
+            radius: 6,
+            fillColor: "#0a00ff",
+            color: "#000",
+            weight: .51,
+            opacity: .5,
+            fillOpacity: 0.8
+        };
+        
+        var no_zoneStyle = {
+            color: "#ff0000",
+            opacity: .5,
+            fillOpacity: 0.8
+        };
+        
+        var routeStyle = {
+            color: "#00fff5",
+            fillOpacity: 1,
+            weight: 5
+        };
+        
+        var droneStyle = {
+            radius: 7,
+            fillColor: "#ff8000",
+            color: "#000",
+            weight: .51,
+            opacity: 1,
+            fillOpacity: 0.8,
+            pane: "drones"
+        };
+
+        graphLayer = new L.GeoJSON(graph, {
+            pointToLayer: function (feature, latlng) {
+
+                return L.circleMarker(latlng, towerStyle);
+            }
+        });
+        
+        nozoneLayer = new L.GeoJSON(no_zone, {
+            style: no_zoneStyle
+        }).addTo(myLayer);
+        
+        selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
+        
+        let d1 = [1, 55.37279029999999, 10.263379700000002];
+        drones.push(d1);
+        let d2 = [99, 55.37279029999999, 10.283379700000002];
+        drones.push(d2);
+        
+        droneLayer = new L.LayerGroup().addTo(myLayer);
+        drones.forEach(function(d) {
+            new L.circleMarker([d[1], d[2]], droneStyle).addTo(droneLayer);
+        })
+        
+
+        map.attributionControl.setPrefix('');
+        var denmark = new L.LatLng(55.94612, 10.48645); 
+        map.setView(denmark, 8);
+        
+        map.on('zoomend' , function (e) {
+            var geo = map.getCenter();
+            console.log(map.getZoom());
+            if (map.getZoom() >9 && towerrender)
+            {
+                $("#sidepanel ul li p").fadeOut(0);
+                myLayer.addLayer(graphLayer);
+                myLayer.addLayer(selectTowerLayer);
+            }else {
+                if(towerrender == 1) {
+                    $("#sidepanel ul li p").fadeIn(0);
+                }
+                myLayer.removeLayer(graphLayer);
+                myLayer.removeLayer(selectTowerLayer);
+            }
+        });
+        
+        map.on("click", function(e) {
+            console.log(selectedTowers)
+        });
+        
+        
+        graphLayer.on("click", function(e) {
+            var lat = e.layer._latlng.lat;
+            var lng = e.layer._latlng.lng;  
+
+            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                .done(function(data) {
+                selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
+                new L.circleMarker([data.tower[1], data.tower[2]], selectStyle).addTo(selectTowerLayer);
+            })
+        });
+        
+        selectTowerLayer.on("click", function(e) {
+            var lat = e.layer._latlng.lat;
+            var lng = e.layer._latlng.lng;  
+            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                .done(function(data) {
+                selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
+                selectTowerLayer.removeLayer(e.layer);
+            })
+        });  
+    }
+    
+    
+    
+    
+    function route() {
+        var drns = [];  
+        var routePromises = [];
+        
+        const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
+        for(var i = 0; i < drones.length; i++) {
+            let id = drones[i][0];
+            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drones[i][1], drones[i][2]));
+            var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
+                .done(function(data) {
+                    //selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
+                    //new L.circleMarker([data.tower[1], data.tower[2]], selectStyle).addTo(selectTowerLayer);
+                    drns.push([id+"", data.tower[0], data.tower[2], data.tower[1]]);
+                    selectedTowers = uniq(selectedTowers);
+            });
+            routePromises.push(request);
+        }
+
+        $.when.apply(null, routePromises).done(data => {
+            if(drns.length > 0) {
+                console.log(drns);
+                console.log(selectedTowers);
+                
+                $.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drns,'towers':selectedTowers})
+                    .done(function(data) {
+                        for(drone in data) {
+                            if(data[drone].distance > 0) {
+                                routeLayer = new L.polyline(data[drone].path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(myLayer);
+                            }
+                        }
+                });
+            }
+        });
+        
+
+    }
+
+    function uniq(a) {
+        var uniID = [];
+        var unArr = [];
+        
+        for(var i = 0; i < a.length; i++) {
+            if(!uniID.includes(a[i][0])) {
+                uniID.push(a[i][0]);
+                unArr.push(a[i]);
+            }
+        }
+        return unArr;
+    }
+    
+</script>  
+</head>
+<body onLoad="javascript:init();">
+    <div id="sidepanel">
+        <h1>Title</h1>
+        <ul>
+            <li id="noflyrender">No fly zones<img></li>
+            <li id="towerrender">Towers <p>Zoom in</p><img></li>
+            <li id="dronerender">Drones <img></li>
+            <li id="routerender">Routes <img></li>
+        </ul>
+        
+        <button onclick="route();">Test</button>
+    </div>
+    <div id="map"></div>
+</body>
+<script>
+$("#noflyrender img").attr("src", yesrender);
+$("#towerrender img").attr("src", yesrender);
+$("#dronerender img").attr("src", yesrender);    
+$("#routerender img").attr("src", yesrender);    
+
+$('#towerrender').click(function() {
+    if(towerrender == 1) {
+        $("#towerrender img").attr("src", norender);
+        myLayer.removeLayer(graphLayer);
+        myLayer.removeLayer(selectTowerLayer);
+        $("#sidepanel ul li p").fadeOut(0);
+        towerrender = 0;
+    } else {
+        $("#towerrender img").attr("src", yesrender);
+        if(map.getZoom() > 10) {
+            myLayer.addLayer(graphLayer);
+            myLayer.addLayer(selectTowerLayer);
+        } else {
+            $("#sidepanel ul li p").fadeIn(0);
+        }
+        towerrender = 1;
+    }
+});
+    
+$('#routerender').click(function() {
+    if(routerender == 1) {
+        $("#routerender img").attr("src", norender);
+        myLayer.removeLayer(routeLayer);
+        routerender= 0;
+    } else {
+        $("#routerender img").attr("src", yesrender);
+        myLayer.addLayer(routeLayer);
+        routerender = 1;
+    }
+});
+    
+$('#dronerender').click(function() {
+    if(dronerender == 1) {
+        $("#dronerender img").attr("src", norender);
+        myLayer.removeLayer(droneLayer);
+        dronerender= 0;
+    } else {
+        $("#dronerender img").attr("src", yesrender);
+        myLayer.addLayer(droneLayer);
+        dronerender = 1;
+    }
+});
+    
+$('#noflyrender').click(function() {
+    if(nozonerender == 1) {
+        $("#noflyrender img").attr("src", norender);
+        myLayer.removeLayer(nozoneLayer);
+        nozonerender = 0;
+    } else {
+        $("#noflyrender img").attr("src", yesrender);
+        myLayer.addLayer(nozoneLayer);
+        nozonerender = 1;
+    }
+});
+</script>
+</html>
