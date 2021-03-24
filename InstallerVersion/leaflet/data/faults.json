@@ -1,0 +1,32 @@
+{
+	"FaultList": [
+		{
+			"Fault": {
+				"id": 0,
+				"tower": {
+					"lat": "55.4681396",
+					"lng": "10.1335883"
+				},
+				"images": [
+				    "https://f.cyberdrop.cc/BILLEDE-mm88QfLS.png",
+				    "https://f.cyberdrop.cc/billede2-4e1w2sJU.png",
+				    "https://f.cyberdrop.cc/billede3-f2p6Aodq.png"
+				  ]
+			}
+		},
+		{
+			"Fault": {
+				"id": 1,
+				"tower": {
+					"lat": "55.3424033",
+					"lng": "10.2115578"
+				},
+				"images": [
+				    "https://f.cyberdrop.cc/BILLEDE-mm88QfLS.png",
+				    "https://f.cyberdrop.cc/billede2-4e1w2sJU.png",
+				    "https://f.cyberdrop.cc/billede3-f2p6Aodq.png"
+				  ]
+			}
+		}
+	]
+}
