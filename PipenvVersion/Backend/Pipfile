@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+kml2geojson = "*"
+pygeoj = "*"
+geojson = "*"
+shapely = "*"
+requests = "*"
+numpy = "*"
+folium = "*"
+flask = "*"
+scipy = "*"
+pyproj = "*"
+ortools = "*"
+networkx = "*"
+flask_cors = "*"
