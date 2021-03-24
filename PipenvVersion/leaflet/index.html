@@ -1,0 +1,989 @@
+<html>
+<head>
+<title>Drones</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+  integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+  crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://npmcdn.com/leaflet-geometryutil"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/js/splide.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/css/splide.min.css">
+<style>
+    * {
+        margin: 0; padding: 0;
+    }
+    
+    #sidepanel {
+	   height: 100%;
+        width: 20%;
+        float: left;
+        background-color: #e2e2e2;
+        border-right: 1px solid #919191;
+    }
+    
+    #sidepanel h1 {
+        text-align: center;
+        font-family: sans-serif;
+        padding-top: 20px; 
+    }
+    
+    #sidepanel ul {
+	   list-style: none;
+        margin-top: 20px;
+    }
+    
+    #sidepanel ul li {
+	   padding: 20px;
+        background-color: white;
+        border-top: 1px solid #e2e2e2;
+        cursor: pointer;
+        position: relative;
+        -webkit-user-select: none;  /* Chrome all / Safari all */
+      -moz-user-select: none;     /* Firefox all */
+      -ms-user-select: none;      /* IE 10+ */
+      user-select: none; 
+    }
+    
+    #sidepanel ul li img{
+	   width: 30px;
+        float: right;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 20px;
+    }
+    
+    #sidepanel ul li p{
+	   float: right;
+        margin-right: 40px;
+    }
+
+    #map {
+        width: calc(80% - 1px); height: 100%; 
+        float: left;
+    }
+
+    .controlpanel {
+        position: fixed; /* Stay in place */
+        background-color: white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        padding-top: 0.4%;
+        padding-left: 0.3%;
+        padding-right: 0.3%;
+        padding-bottom: 0.8%;
+        border: 1px solid #cccccc;
+        z-index: 9999999;
+        display: none;
+    }
+
+    #controlpanel {
+        top: 30px;
+        right: 30px;
+        width: 680px;
+        height: 360px;
+    }
+    
+    #faultpanel {
+        bottom: 30px;
+        right: 30px;
+        width: 680px;
+        height: 360px;
+    }
+        
+    #livefeed {
+        margin-top: 25px;
+        margin-left: 20px;
+        width: 250px;
+        height: 235px;
+        background-color: transparent;
+        float: left;
+    }
+
+    #livefeedvideo_html5_api {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        width: 650px;
+        height: 280px;
+    }
+
+    #droneinfo {
+        margin-top: 25px;
+        width: 600px;
+        height: 50px;
+        float: left;
+    }
+    
+    .droneinfoparagraph {
+        width: 600px;
+        margin-left: 20px;
+    }
+    
+    #controlpanelcontainer {
+        background-color: grey;
+        width: 400px;
+        height: 250px;
+    }
+    
+    .controlpanel-button {
+        background-color: white;
+        color: black;
+        padding: 1px 2px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        cursor: pointer;
+        transition-duration: 0.1s;
+        position: absolute;
+        right: 10;
+        top: 10;       
+    }
+    .vjs-control-bar, .vjs-hidden, .vjs-control-text, .vjs-text-track-display, .vjs-big-play-button, .vjs-loading-spinner {
+        display: none;
+    }
+    .vjs-modal-dialog-content {
+        position: absolute;
+        top: 50;
+        left: 50;
+        width: 400px;
+        height: 100px;
+    }
+        
+    #addplan_popup {
+        width: 230px;
+        height: 50px;
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        padding: 20px;
+        background-color: #e2e2e2;
+        border: 1px solid #919191;
+        padding-bottom: 30px;
+        display: none;
+    }
+    #addplan_popup input {
+        padding: 5px;
+    }
+
+    #addplan_popup button {
+        background-color: rgb(0, 0, 199);
+        color: white;
+        border: 0;
+        border-bottom: 2px rgb(0, 0, 75);
+        border-radius: 5px;
+        padding: 7px;
+    }
+
+    small {
+        float: right;
+    }
+
+    #planpopup {
+        width: 180px;
+        max-height: 380px;
+        z-index: 1000;
+        background-color: #e2e2e2;
+        border: 1px solid #919191;
+        position: absolute;
+        /* left: 280px;  */
+        top: 410px;
+        display: none;
+        padding: 10px;
+    }
+
+    #planpopup .x_btn {
+        font-family:Verdana, Geneva, Tahoma, sans-serif;
+        position: absolute;
+        top: 0px;
+        right: 3px;
+        color: red;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    #droneplans {
+        overflow-y: scroll;
+    }
+
+    #droneplans ul {
+        list-style: none;
+    }
+    #droneplans ul li {
+        border-top: 1px solid #c2c2c2;
+        padding: 5px 0;
+    }
+    #droneplans ul li:nth-child(1000n +1) {
+        border-top: 0px;
+    }
+
+    .splideimg {
+        width: 680px;
+        height: 360px;
+    }
+
+    #planpanel {
+    overflow-y: scroll;
+    max-height: 56vh;
+}
+
+#changeMapType {
+    position: absolute;
+    width: 70px;
+    height: 40px;
+    padding: 10px;
+    bottom: 20px;
+    right: 10px;
+    background-color: #e2e2e2;
+    border: 1px solid #919191;
+    z-index: 1100;
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+}
+#changeMapType p {
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+    font-size: 1.3rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+body {
+    overflow-y: hidden;
+}
+
+#map {
+    margin-top: 1000px;
+}
+
+#loading {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    color: black;
+}
+
+#planpopup button {
+    cursor: pointer;
+}
+        
+         /* The close button for the popup*/
+</style>
+<script language="javascript">
+    var map;
+
+    var nozonerender = 1;
+    var towerrender = 1;
+    var dronerender = 1;
+    var routerender = 1;
+    
+    var norender = "https://upload.wikimedia.org/wikipedia/en/b/ba/Red_x.svg";
+    var yesrender = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Checkmark_green.svg";
+    
+    var myLayer;
+    var graphLayer;
+    var nozoneLayer;
+    var planRouteLayer;
+    var selectTowerLayer;
+    var faultsLayer;
+    
+    var selectedTowers = [];
+    
+    var drone_dict = {};
+    var drones = [];
+
+    var routeLayer;
+    
+    var lastVRP = {};
+
+    var map;
+    var googleHybrid;
+
+    var selectStyle = {
+        radius: 8,
+        fillColor: "#00ff00",
+        color: "#000",
+        weight: .51,
+        opacity: .5,
+        fillOpacity: 0.8,
+        pane: "selectedTowers"
+    };
+
+    var mapSettings = {
+        maxZoom: 18,
+        minZoom: 3,
+        subdomains:['mt0','mt1','mt2','mt3'],
+        attribution: '&copy; <a href="https://google.com">Google Maps</a> contributors',
+        detectRetina: true,
+        reuseTiles: true,
+        unloadInvisibleTiles: true
+    };
+
+    function init() {
+        map = new L.Map('map', {
+            center: [55.94612, 10.48645],
+            zoom: 8,
+            renderer: L.canvas()
+        });
+        
+        map.createPane("drones");
+        map.getPane("drones").style.zIndex = 1000;
+        
+        map.createPane("faults");
+        map.getPane("faults").style.zIndex = 950;
+
+        map.createPane("nozonePane");
+        map.getPane("nozonePane").style.zIndex = 999;
+        
+        map.createPane("routes");
+        map.getPane("routes").style.zIndex = 900;
+        
+        map.createPane("selectedTowers");
+        map.getPane("selectedTowers").style.zIndex = 850;
+
+        googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', mapSettings);
+  
+        googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', mapSettings).addTo(map);
+
+        myLayer = new L.GeoJSON().addTo(map);
+        
+        var towerStyle = {
+            radius: 6,
+            fillColor: "#0a00ff",
+            color: "#000",
+            weight: .51,
+            opacity: .5,
+            fillOpacity: 0.8
+        };
+        
+        var no_zoneStyle = {
+            color: "#ff0000",
+            opacity: .5,
+            fillOpacity: 0.8
+        };
+        
+        var routeStyle = {
+            color: "#00fff5",
+            fillOpacity: 1,
+            weight: 5
+        };
+        
+        var droneStyle = {
+            radius: 7,
+            fillColor: "#ff8000",
+            color: "#000",
+            weight: .51,
+            opacity: 1,
+            fillOpacity: 0.8,
+            pane: "drones"
+        };
+
+        var faultStyle = {
+            radius: 10,
+            fillColor: "#ff0000",
+            color: "#000",
+            weight: .60,
+            opacity: .5,
+            fillOpacity: 0.8,
+            pane: "faults"
+        };
+
+
+        //LIVEFEED STUFF
+        var videocontainer = document.getElementById("livefeedvideo");
+        var btn_controlpanel_exit = document.getElementById('btn_controlpanel_exit');
+        var controlpanel = document.getElementById("controlpanel");
+        btn_controlpanel_exit.onclick = function() {
+            showHidePanel(controlpanel, false);
+            stopVideoFeed();
+        }; 
+        var faultpanel = document.getElementById("faultpanel");
+        btn_faultpanel_exit.onclick = function() {showHidePanel(faultpanel, false)}; 
+        //###################################### end of experimental
+
+
+        $.getJSON("http://127.0.0.1:5000/graph", function(data) {
+            graphLayer = L.geoJson(data, {
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, towerStyle);
+                }
+            }).on("click", function(e) {
+            var lat = e.layer._latlng.lat;
+            var lng = e.layer._latlng.lng;
+
+            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                .done(function(data) {
+                selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
+                drawSelectedTowers(data.tower, false);
+            })});
+        }).done(d => {
+            $("#map").css("margin-top", "0");
+        });
+        
+        $.getJSON("http://127.0.0.1:5000/no_zone", function(data) {
+            nozoneLayer = L.geoJson(data, {
+                    style: no_zoneStyle
+                }
+            ).addTo(myLayer);
+        });
+        
+        selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
+        droneLayer = new L.LayerGroup().addTo(myLayer);
+        routeLayer = new L.LayerGroup().addTo(myLayer);
+        planRouteLayer = new L.LayerGroup().addTo(myLayer);
+        faultsLayer = new L.GeoJSON(); 
+        
+        $.getJSON("http://127.0.0.1:5000/drones", function(json) {
+            json["DroneList"].forEach(function(droneEntry) {
+                var drone = droneEntry["Drone"];
+                drone_dict[drone["id"]] = {
+                    id: drone["id"],
+                    isWorking: drone["isWorking"],
+                    batteryPercentage: drone["batteryPercentage"],
+                    marker: new L.circleMarker([drone["coords"]["y"], drone["coords"]["x"]], droneStyle),
+                    coords: {
+                        x: drone["coords"]["x"],
+                        y: drone["coords"]["y"]
+                    }
+                };
+                drone_dict[drone["id"]].marker.addTo(droneLayer);
+                drone_dict[drone["id"]].marker.on('click', droneClickFunction);
+                drone_dict[drone["id"]].marker.data = drone_dict[drone["id"]];
+            });
+        }).done(function() {
+            RefreshDronesOnInterval(3 * 1000); //amount of time in milliseconds
+        });
+
+        async function RefreshDronesOnInterval(delay) { 
+            setInterval(function() {
+                $.getJSON("http://127.0.0.1:5000/drones", function(json) {
+                    json["DroneList"].forEach(function(droneEntry) {
+                        var drone = droneEntry["Drone"];
+                        if (!_.isEqual(drone, _.omit(drone_dict[drone.id], 'marker'))) {
+                            var oldmarker = drone_dict[drone["id"]].marker
+                            drone_dict[drone["id"]] = {
+                                id: drone["id"],
+                                isWorking: drone["isWorking"],
+                                batteryPercentage: drone["batteryPercentage"],
+                                marker: oldmarker,
+                                coords: {
+                                    x: drone["coords"]["x"],
+                                    y: drone["coords"]["y"],
+                                }
+                            };
+                            var lat = (oldmarker.data.coords.x);
+                            var lng = (oldmarker.data.coords.y);
+                            var newLatLng = new L.LatLng(drone["coords"]["y"], drone["coords"]["x"]);
+                            drone_dict[drone["id"]].marker.setLatLng(newLatLng);
+                        }
+                    })
+                })
+            }, delay); // delay in milliseconds
+        }
+
+
+        loadPlanList();
+
+        var fault_dict = [];
+        $.getJSON("http://127.0.0.1:5000/faults", function(json) {
+            json["FaultList"].forEach(function(faultEntry) {
+                var fault = faultEntry["Fault"];
+                fault_dict[fault["id"]] = {
+                    id: fault["id"],
+                    marker: new L.circleMarker([fault["tower"]["lat"], fault["tower"]["lng"]], faultStyle),
+                    images: fault["images"]
+                };
+                fault_dict[fault["id"]].marker.addTo(faultsLayer);
+                fault_dict[fault["id"]].marker.on('click', faultClickFunction);
+                fault_dict[fault["id"]].marker.data = fault_dict[fault["id"]];
+            });
+        }).done(function() {
+            //RefreshDronesOnInterval(3 * 1000); //amount of time in milliseconds
+        });
+
+        var faultOverlayCanBeRemoved = true;
+        function faultClickFunction(e) { 
+            faultOverlayCanBeRemoved = false;
+            slider.destroy()
+            $(".splide__list").html("")
+            var imgarray = e.target.data.images
+            imgarray.forEach(image => {
+                $(".splide__list").append("<li class='splide__slide'><img class='splideimg' src='" + image + "'></li>")
+            })
+            slider = new Splide( '.splide' ).mount();
+            showHidePanel(faultpanel, true);
+            //preventing the map.click function from removing the panel immediately again
+            setTimeout(function() {
+                faultOverlayCanBeRemoved = true;
+            }, 200);
+        }
+
+
+        /*
+        * The trick with the next two functions is that when you click a drone it will execute the drone layer function which shows the drone info panel, however the map click function
+        * will also execute and immediately remove the panel (because its meant to remove the panel when you click away from the drone, but clicking ON the drone also executes this,
+        * unfortunately. The solution is to have a canBeRemoved boolean set to false when the popup is displayed and changing it back to true after some delay (here 200ms) which means
+        * it will change back AFTER the map function has executed, thus preventing it from removing it in the first place)
+        */
+        var ControlPanelCanBeRemoved = false        
+        map.on("click", function (e) { 
+                if (ControlPanelCanBeRemoved) {
+                    showHidePanel(controlpanel, false);
+                    stopVideoFeed();
+                } 
+                if (faultOverlayCanBeRemoved) {
+                    showHidePanel(faultpanel, false);
+                }
+        });
+
+        function droneClickFunction(e) { 
+            console.log(e)
+                feature = e.target;
+                ControlPanelCanBeRemoved = false;
+                showHidePanel(controlpanel, true);
+                startVideoFeed();
+                var coordx = feature.data.coords.x;
+                var coordy = feature.data.coords.y;
+                document.getElementById("droneinfoname").textContent = "Object type: Drone";
+                document.getElementById("droneinfoid").textContent = "Drone ID: " + feature.data.id;
+                document.getElementById("droneinfobattery").textContent = "Battery Level: " + feature.data.batteryPercentage + "%";
+                document.getElementById("droneinfoworking").textContent = "Drone is Working Already: " + Boolean(feature.data.isWorking);
+                document.getElementById("droneinfocoordinates").textContent = "Drone Coordinates: " + coordx + " , " + coordy;
+                //preventing the map.click function from removing the panel immediately again
+                setTimeout(function() {
+                    ControlPanelCanBeRemoved = true;
+                }, 200);
+            //clickedCircle.bindPopup("POPUP IF WE NEED IT").openPopup();
+        }  
+
+        function showHidePanel (panel, visible) {
+            if (visible) {
+                panel.style.display = "block";
+            } else {
+                panel.style.display = "none";
+                //stop playing in the background and consuming bandwidth on an invisible video
+            }
+        };
+
+        function startVideoFeed() {
+            videojs(videocontainer).src({
+                type: 'application/x-mpegURL',
+                src: 'http://demo.unified-streaming.com/video/tears-of-steel/tears-of-steel.ism/.m3u8'
+            });
+            videojs(videocontainer).play();
+        }
+        function stopVideoFeed() {
+            videojs(videocontainer).pause();
+        }
+
+        //set view of Denmark initially upon launch
+        map.attributionControl.setPrefix('');
+        var denmark = new L.LatLng(55.94612, 10.48645); 
+        map.setView(denmark, 8);
+        
+        //ensure that we zoom in far enough to render the towers, such that we don't get overwhelmed with tower markers that we dont care about
+        map.on('zoomend' , function (e) {
+            var geo = map.getCenter();
+            if (map.getZoom() >9 && towerrender)
+            {
+                $("#sidepanel ul li p").fadeOut(0);
+                myLayer.addLayer(graphLayer);
+                myLayer.addLayer(selectTowerLayer);
+                myLayer.addLayer(faultsLayer);
+            }else {
+                if(towerrender == 1) {
+                    $("#sidepanel ul li p").fadeIn(0);
+                }
+                myLayer.removeLayer(graphLayer);
+                myLayer.removeLayer(selectTowerLayer);
+                myLayer.removeLayer(faultsLayer);
+            }
+        });
+
+        selectTowerLayer.on("click", function(e) {
+            var lat = e.layer._latlng.lat;
+            var lng = e.layer._latlng.lng;
+            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                .done(function(data) {
+                selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
+                selectTowerLayer.removeLayer(e.layer);
+            })
+        });
+    }
+
+        function clearSelection()
+        { 
+        if(selectedTowers.length > 0) {
+            selectedTowers = [];
+            myLayer.removeLayer(selectTowerLayer);
+            selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
+            myLayer.removeLayer(routeLayer);
+            routeLayer = new L.GeoJSON().addTo(myLayer); 
+            $("#addplan_popup").fadeOut(100);
+            $("#planpopup").fadeOut(50);
+
+            selectTowerLayer.on("click", function(e) {
+                var lat = e.layer._latlng.lat;
+                var lng = e.layer._latlng.lng;
+                $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
+                    .done(function(data) {
+                    selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
+                    selectTowerLayer.removeLayer(e.layer);
+                })
+            });
+        }
+        }
+
+    function route() {
+        var drns = [];  
+        var routePromises = [];
+        myLayer.removeLayer(routeLayer);
+        routeLayer = new L.GeoJSON().addTo(myLayer);
+        const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
+
+        var length = (Object.keys(drone_dict).length);
+
+        for(var i = 0; i < length; i++) {
+            let id = drone_dict[i].id;
+
+            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].y, drone_dict[i].x));
+    
+            var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
+                .done(function(data) {
+                    drns.push([id+"", data.tower[0], data.tower[2], data.tower[1]]);
+                    selectedTowers = uniq(selectedTowers);
+            });
+            routePromises.push(request);
+        }
+
+        $.when.apply(null, routePromises).done(data => {
+            var shortestPath = Infinity;
+            var shortestDrone;
+
+            if(drns.length > 0) {
+                $.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drns,'towers':selectedTowers})
+                    .done(function(data) {
+                        for(drone in data) {
+                            if(data[drone].distance > 0) {
+                                    drawRoute(data[drone]);
+                            }
+                        }
+                        $("#addplan_popup").fadeIn(100);
+                        lastVRP = data;
+                });
+            }
+        });
+    } 
+
+    function drawRoute(drone) {
+       return new L.polyline(drone.path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(routeLayer);   
+    }
+
+    function drawSelectedTowers(tower, changeOrder) {
+        if(changeOrder) 
+            return new L.circleMarker([tower[2], tower[1]], selectStyle).addTo(selectTowerLayer);
+        return new L.circleMarker([tower[1], tower[2]], selectStyle).addTo(selectTowerLayer);
+    }
+
+    function loadPlanList() {
+        $("#plantab_active > ul").html("");
+        $("#plantab_inactive > ul").html("");
+        $("#plantab_done > ul").html("");
+        $.getJSON("http://127.0.0.1:5000/plans").done(data => {
+            data["PlanList"].forEach(e => {
+                if(e["done"]) { //adds done plans to the correct tab
+                    $("#plantab_done > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
+                } else if(!e["done"] && !e["active"]) { //adds inactive plans to the correct tab
+                    $("#plantab_inactive > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
+                } else { //adds active plans to the correct tab
+                    $("#plantab_active > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
+                }                
+            })
+            $("#addplan_popup").fadeOut(100);
+            clearSelection();
+        })
+    }
+
+    function activate_plan(id) {
+        clearSelection();
+        $.ajax({
+            method: "POST",
+            url: "http://127.0.0.1:5000/activate_plan",
+            data: {"id" : id}
+        }).done(e => {
+            loadPlanList();
+        });
+    }
+
+    function remove_plan(id) {
+        clearSelection();
+        $.ajax({
+            method: "POST",
+            url: "http://127.0.0.1:5000/delete_plan",
+            data: {"id" : id}
+        }).done(e => {
+            loadPlanList();
+        });
+    }
+
+    function show_plan(id) {
+        clearSelection();
+        $.getJSON("http://127.0.0.1:5000/get_plan", {"id" : id}).done(data => {
+            selectedTowers = data["towers"];
+            selectedTowers.forEach(tower => {
+                drawSelectedTowers(tower, true)
+            })
+            droneplanshtml = ""
+
+            data["plan"].forEach(droneplan => {
+                drawRoute(droneplan)
+                droneplanshtml += "<li> <p>Drone ID: " + droneplan["drone"]+ "</p><p>Distance: " + droneplan["distance"] + "</p> </li>";
+            });
+
+            $("#planpopup").fadeIn(50);
+            
+            if(data["active"] || data["done"]) {
+                $("#planpopup #activate_btn").fadeOut(0);
+            } else {
+                // $("#planpopup #delete_btn").fadeIn(0);
+                $("#planpopup #activate_btn").fadeIn(0);
+            }
+
+            $("#planpopup #delete_btn").attr("onclick", "remove_plan("+ id +")");
+            $("#planpopup #activate_btn").attr("onclick", "activate_plan("+ id +")");
+
+            //Should change when responsive design is implemented
+            var left = $("#sidepanel").width() + 10;
+            $("#planpopup").css("left", left);
+            $("#planpopup h3").html(""+ data["name"])
+            $("#planpopup_towers").html("Towers: "+ selectedTowers.length)
+            $("#planpopup_drones").html("Drones: "+ data["plan"].length)
+            $("#droneplans ul").html(droneplanshtml);
+        })
+    }
+
+    function uniq(a) {
+        var uniID = [];
+        var unArr = [];
+        
+        for(var i = 0; i < a.length; i++) {
+            if(!uniID.includes(a[i][0])) {
+                uniID.push(a[i][0]);
+                unArr.push(a[i]);
+            }
+        }
+        return unArr;
+    }
+
+    /* 
+    * Workaround for 1px lines appearing in some browsers due to fractional transforms
+    * and resulting anti-aliasing.
+    * https://github.com/Leaflet/Leaflet/issues/3575
+    */
+    (function(){
+        var originalInitTile = L.GridLayer.prototype._initTile
+        L.GridLayer.include({
+            _initTile: function (tile) {
+                originalInitTile.call(this, tile);
+                var tileSize = this.getTileSize();
+                tile.style.width = tileSize.x + 1 + 'px';
+                tile.style.height = tileSize.y + 1 + 'px';
+            }
+        });
+    })()     
+
+    var slider;
+document.addEventListener( 'DOMContentLoaded', function () {
+		slider = new Splide( '.splide' ).mount();
+	} );
+</script>  
+</head>
+<body onLoad="javascript:init();">
+    <div id="loading">Loading...</div>
+    <div id="sidepanel">
+        <h1>Title</h1>
+        <ul>
+            <li id="noflyrender">No fly zones<img></li>
+            <li id="towerrender">Towers <p>Zoom in</p><img></li>
+            <li id="dronerender">Drones <img></li>
+            <li id="routerender">Routes <img></li>
+        </ul>
+        
+        <button onclick="route();">Test</button>
+        
+        <div id="planpanel">
+            <div id="plantab_inactive">
+                <br><hr><br>
+                <h3>Plans - Inactive</h3>
+                <ul></ul>
+            </div>  
+            <div id="plantab_active">
+                <br><hr><br>
+                <h3>Plans - Active</h3>
+                <ul></ul>
+            </div>  
+            <div id="plantab_done">
+                <br><hr><br>
+                <h3>Plans - Done</h3>
+                <ul></ul>
+            </div>  
+        </div>
+    </div>
+    <div id="planpopup">
+        <div class="x_btn" onclick="clearSelection()">X</div>
+        <h3></h3>
+        <p id="planpopup_towers"></p>
+        <p id="planpopup_drones"></p>
+        <div id="droneplans" style="margin-left: 10px; padding: 5px 10px; border: 1px solid #919191;"><ul></ul></div>
+        <button id="activate_btn">Activate</button>
+        <button id="delete_btn">Delete</button>
+    </div>
+    <div id="addplan_popup">
+        <h3>Add flight plan:</h3> <br>
+        <input type="text" id="planname" placeholder="Name of plan" autocomplete="off">
+        <button id="addplan_btn">Add</button>
+        <button style="background-color: rgb(184, 14, 14);" onclick="clearSelection()">Cancel</button>
+    </div>
+    <div id="map"></div>
+    <div id="changeMapType"><p unselectable="on">Satellite</p></div>
+    <!-- ######################### Mission control panel ######################### -->
+    <div id="controlpanel" class="controlpanel">
+        <div id="livefeed">
+            <video
+                id="livefeedvideo"
+                class="video-container"
+                height="250px"
+                width="250px"
+                muted
+                preload="auto"
+                poster="MY_VIDEO_POSTER.jpg"
+            >
+            </video>
+            <script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
+        </div>
+    
+        <div id="droneinfo">
+            <p id="droneinfoname" class="droneinfoparagraph"></p>
+            <p id="droneinfoid" class="droneinfoparagraph"></p>
+            <p id="droneinfobattery" class="droneinfoparagraph"></p>
+            <p id="droneinfoworking" class="droneinfoparagraph"></p>
+            <p id="droneinfocoordinates" class="droneinfoparagraph"></p>
+        </div>
+        
+        <button id="btn_controlpanel_exit" type="button" class="controlpanel-button">X</button>
+    </div>
+    <div id="faultpanel" class="controlpanel">
+        <div class="splide">
+            <div class="splide__track">
+                <ul class="splide__list">
+                    
+                </ul>
+            </div>
+        </div>
+        <button id="btn_faultpanel_exit" type="button" class="controlpanel-button">X</button>
+    </div>
+</body>
+<script>
+$("#noflyrender img").attr("src", yesrender);
+$("#towerrender img").attr("src", yesrender);
+$("#dronerender img").attr("src", yesrender);    
+$("#routerender img").attr("src", yesrender);    
+
+$('#towerrender').click(function() {
+    if(towerrender == 1) {
+        $("#towerrender img").attr("src", norender);
+        myLayer.removeLayer(graphLayer);
+        myLayer.removeLayer(selectTowerLayer);
+        myLayer.removeLayer(faultsLayer);
+        $("#sidepanel ul li p").fadeOut(0);
+        towerrender = 0;
+    } else {
+        $("#towerrender img").attr("src", yesrender);
+        if(map.getZoom() > 10) {
+            myLayer.addLayer(graphLayer);
+            myLayer.addLayer(selectTowerLayer);
+            myLayer.addLayer(faultsLayer);
+        } else {
+            $("#sidepanel ul li p").fadeIn(0);
+        }
+        towerrender = 1;
+    }
+});
+    
+$('#routerender').click(function() {
+    if(routerender == 1) {
+        $("#routerender img").attr("src", norender);
+        myLayer.removeLayer(routeLayer);
+        routerender= 0;
+    } else {
+        $("#routerender img").attr("src", yesrender);
+        myLayer.addLayer(routeLayer);
+        routerender = 1;
+    }
+});
+    
+$('#dronerender').click(function() {
+    if(dronerender == 1) {
+        $("#dronerender img").attr("src", norender);
+        myLayer.removeLayer(droneLayer);
+        dronerender= 0;
+    } else {
+        $("#dronerender img").attr("src", yesrender);
+        myLayer.addLayer(droneLayer);
+        dronerender = 1;
+    }
+});
+    
+$('#noflyrender').click(function() {
+    if(nozonerender == 1) {
+        $("#noflyrender img").attr("src", norender);
+        myLayer.removeLayer(nozoneLayer);
+        nozonerender = 0;
+    } else {
+        $("#noflyrender img").attr("src", yesrender);
+        myLayer.addLayer(nozoneLayer);
+        nozonerender = 1;
+    }
+});
+
+$("#addplan_popup #addplan_btn").click(function() {
+    if ($('#addplan_popup input').val().length > 0) {
+        $.ajax({
+            type: "POST",
+            url: "http://127.0.0.1:5000/add_plan",
+            data: {"vrp": JSON.stringify(lastVRP), "name" : $('#addplan_popup input').val(), 'towers': JSON.stringify(selectedTowers) }
+        }).done(function(data) {
+            $('#addplan_popup input').val("");
+            loadPlanList()
+        })
+    } else {
+        alert("You must enter a name for the plan");
+    }
+}); 
+
+$("#changeMapType").click(() => {
+    var test = $("#changeMapType p").html() == "Satellite"
+    if(test) { // change to satelite mode
+        $("#changeMapType p").html("Map")
+        googleHybrid.addTo(map);
+    } else {
+        $("#changeMapType p").html("Satellite")
+        map.removeLayer(googleHybrid);
+    }
+})
+</script>
+</html>
