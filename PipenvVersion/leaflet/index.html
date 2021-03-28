@@ -660,7 +660,7 @@ body {
         for(var i = 0; i < length; i++) {
             let id = drone_dict[i].id;
 
-            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].y, drone_dict[i].x));
+            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].coords.y, drone_dict[i].coords.x));
     
             var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
                 .done(function(data) {
