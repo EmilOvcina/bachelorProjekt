@@ -8,14 +8,14 @@ then
 	python3 -m venv "backend/venv/"
 	source ./backend/venv/bin/activate
 	pip install -r requirements.txt
-	'cp' -rf "./limic/" "backend/venv/lib/python3.9/site-packages/limic/." 
+	'cp' -rf "./limic/" "backend/venv/lib/$(ls backend/venv/lib)/site-packages/limic/." 
 
 	cd ./backend/
 	source ./venv/bin/activate
 	python -m limic serve npz graph.Denmark.npz ../leaflet/index.html --no-browser
 	deactivate 
 else
-	'cp' -rf "./limic/" "backend/venv/lib/python3.9/site-packages/limic/."
+	'cp' -rf "./limic/" "backend/venv/lib/$(ls backend/venv/lib)/site-packages/limic/."
 	cd ./backend/
 	source ./venv/bin/activate
 	python -m limic serve npz graph.Denmark.npz ../leaflet/index.html --no-browser

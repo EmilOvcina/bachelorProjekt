@@ -1,6 +1,9 @@
 <html>
 <head>
 <title>Drones</title>
+<link rel="icon" type="image/png" href="http://localhost:5000/favicon"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
   crossorigin=""/>
@@ -13,977 +16,296 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/js/splide.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/css/splide.min.css">
-<style>
-    * {
-        margin: 0; padding: 0;
-    }
-    
-    #sidepanel {
-	   height: 100%;
-        width: 20%;
-        float: left;
-        background-color: #e2e2e2;
-        border-right: 1px solid #919191;
-    }
-    
-    #sidepanel h1 {
-        text-align: center;
-        font-family: sans-serif;
-        padding-top: 20px; 
-    }
-    
-    #sidepanel ul {
-	   list-style: none;
-        margin-top: 20px;
-    }
-    
-    #sidepanel ul li {
-	   padding: 20px;
-        background-color: white;
-        border-top: 1px solid #e2e2e2;
-        cursor: pointer;
-        position: relative;
-        -webkit-user-select: none;  /* Chrome all / Safari all */
-      -moz-user-select: none;     /* Firefox all */
-      -ms-user-select: none;      /* IE 10+ */
-      user-select: none; 
-    }
-    
-    #sidepanel ul li img{
-	   width: 30px;
-        float: right;
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        right: 20px;
-    }
-    
-    #sidepanel ul li p{
-	   float: right;
-        margin-right: 40px;
-    }
+<script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
 
-    #map {
-        width: calc(80% - 1px); height: 100%; 
-        float: left;
-    }
-
-    .controlpanel {
-        position: fixed; /* Stay in place */
-        background-color: white;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        padding-top: 0.4%;
-        padding-left: 0.3%;
-        padding-right: 0.3%;
-        padding-bottom: 0.8%;
-        border: 1px solid #cccccc;
-        z-index: 9999999;
-        display: none;
-    }
-
-    #controlpanel {
-        top: 30px;
-        right: 30px;
-        width: 680px;
-        height: 360px;
-    }
-    
-    #faultpanel {
-        bottom: 30px;
-        right: 30px;
-        width: 680px;
-        height: 360px;
-    }
-        
-    #livefeed {
-        margin-top: 25px;
-        margin-left: 20px;
-        width: 250px;
-        height: 235px;
-        background-color: transparent;
-        float: left;
-    }
-
-    #livefeedvideo_html5_api {
-        position: absolute;
-        left: 10px;
-        top: 10px;
-        width: 650px;
-        height: 280px;
-    }
-
-    #droneinfo {
-        margin-top: 25px;
-        width: 600px;
-        height: 50px;
-        float: left;
-    }
-    
-    .droneinfoparagraph {
-        width: 600px;
-        margin-left: 20px;
-    }
-    
-    #controlpanelcontainer {
-        background-color: grey;
-        width: 400px;
-        height: 250px;
-    }
-    
-    .controlpanel-button {
-        background-color: white;
-        color: black;
-        padding: 1px 2px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        cursor: pointer;
-        transition-duration: 0.1s;
-        position: absolute;
-        right: 10;
-        top: 10;       
-    }
-    .vjs-control-bar, .vjs-hidden, .vjs-control-text, .vjs-text-track-display, .vjs-big-play-button, .vjs-loading-spinner {
-        display: none;
-    }
-    .vjs-modal-dialog-content {
-        position: absolute;
-        top: 50;
-        left: 50;
-        width: 400px;
-        height: 100px;
-    }
-        
-    #addplan_popup {
-        width: 230px;
-        height: 50px;
-        position: absolute;
-        top: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        padding: 20px;
-        background-color: #e2e2e2;
-        border: 1px solid #919191;
-        padding-bottom: 30px;
-        display: none;
-    }
-    #addplan_popup input {
-        padding: 5px;
-    }
-
-    #addplan_popup button {
-        background-color: rgb(0, 0, 199);
-        color: white;
-        border: 0;
-        border-bottom: 2px rgb(0, 0, 75);
-        border-radius: 5px;
-        padding: 7px;
-    }
-
-    small {
-        float: right;
-    }
-
-    #planpopup {
-        width: 180px;
-        max-height: 380px;
-        z-index: 1000;
-        background-color: #e2e2e2;
-        border: 1px solid #919191;
-        position: absolute;
-        /* left: 280px;  */
-        top: 410px;
-        display: none;
-        padding: 10px;
-    }
-
-    #planpopup .x_btn {
-        font-family:Verdana, Geneva, Tahoma, sans-serif;
-        position: absolute;
-        top: 0px;
-        right: 3px;
-        color: red;
-        cursor: pointer;
-        font-size: 1.1rem;
-    }
-
-    #droneplans {
-        overflow-y: scroll;
-    }
-
-    #droneplans ul {
-        list-style: none;
-    }
-    #droneplans ul li {
-        border-top: 1px solid #c2c2c2;
-        padding: 5px 0;
-    }
-    #droneplans ul li:nth-child(1000n +1) {
-        border-top: 0px;
-    }
-
-    .splideimg {
-        width: 680px;
-        height: 360px;
-    }
-
-    #planpanel {
-    overflow-y: scroll;
-    max-height: 56vh;
-}
-
-#changeMapType {
-    position: absolute;
-    width: 70px;
-    height: 40px;
-    padding: 10px;
-    bottom: 20px;
-    right: 10px;
-    background-color: #e2e2e2;
-    border: 1px solid #919191;
-    z-index: 1100;
-    text-align: center;
-    border-radius: 10px;
-    cursor: pointer;
-}
-#changeMapType p {
-    -webkit-user-select: none; /* Safari */        
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE10+/Edge */
-    user-select: none; /* Standard */
-    font-size: 1.3rem;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-}
-
-body {
-    overflow-y: hidden;
-}
-
-#map {
-    margin-top: 1000px;
-}
-
-#loading {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    color: black;
-}
-
-#planpopup button {
-    cursor: pointer;
-}
-        
-         /* The close button for the popup*/
-</style>
-<script language="javascript">
-    var map;
-
-    var nozonerender = 1;
-    var towerrender = 1;
-    var dronerender = 1;
-    var routerender = 1;
-    
-    var norender = "https://upload.wikimedia.org/wikipedia/en/b/ba/Red_x.svg";
-    var yesrender = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Checkmark_green.svg";
-    
-    var myLayer;
-    var graphLayer;
-    var nozoneLayer;
-    var planRouteLayer;
-    var selectTowerLayer;
-    var faultsLayer;
-    
-    var selectedTowers = [];
-    
-    var drone_dict = {};
-    var drones = [];
-
-    var routeLayer;
-    
-    var lastVRP = {};
-
-    var map;
-    var googleHybrid;
-
-    var selectStyle = {
-        radius: 8,
-        fillColor: "#00ff00",
-        color: "#000",
-        weight: .51,
-        opacity: .5,
-        fillOpacity: 0.8,
-        pane: "selectedTowers"
-    };
-
-    var mapSettings = {
-        maxZoom: 18,
-        minZoom: 3,
-        subdomains:['mt0','mt1','mt2','mt3'],
-        attribution: '&copy; <a href="https://google.com">Google Maps</a> contributors',
-        detectRetina: true,
-        reuseTiles: true,
-        unloadInvisibleTiles: true
-    };
-
-    function init() {
-        map = new L.Map('map', {
-            center: [55.94612, 10.48645],
-            zoom: 8,
-            renderer: L.canvas()
-        });
-        
-        map.createPane("drones");
-        map.getPane("drones").style.zIndex = 1000;
-        
-        map.createPane("faults");
-        map.getPane("faults").style.zIndex = 950;
-
-        map.createPane("nozonePane");
-        map.getPane("nozonePane").style.zIndex = 999;
-        
-        map.createPane("routes");
-        map.getPane("routes").style.zIndex = 900;
-        
-        map.createPane("selectedTowers");
-        map.getPane("selectedTowers").style.zIndex = 850;
-
-        googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', mapSettings);
-  
-        googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', mapSettings).addTo(map);
-
-        myLayer = new L.GeoJSON().addTo(map);
-        
-        var towerStyle = {
-            radius: 6,
-            fillColor: "#0a00ff",
-            color: "#000",
-            weight: .51,
-            opacity: .5,
-            fillOpacity: 0.8
-        };
-        
-        var no_zoneStyle = {
-            color: "#ff0000",
-            opacity: .5,
-            fillOpacity: 0.8
-        };
-        
-        var routeStyle = {
-            color: "#00fff5",
-            fillOpacity: 1,
-            weight: 5
-        };
-        
-        var droneStyle = {
-            radius: 7,
-            fillColor: "#ff8000",
-            color: "#000",
-            weight: .51,
-            opacity: 1,
-            fillOpacity: 0.8,
-            pane: "drones"
-        };
-
-        var faultStyle = {
-            radius: 10,
-            fillColor: "#ff0000",
-            color: "#000",
-            weight: .60,
-            opacity: .5,
-            fillOpacity: 0.8,
-            pane: "faults"
-        };
-
-
-        //LIVEFEED STUFF
-        var videocontainer = document.getElementById("livefeedvideo");
-        var btn_controlpanel_exit = document.getElementById('btn_controlpanel_exit');
-        var controlpanel = document.getElementById("controlpanel");
-        btn_controlpanel_exit.onclick = function() {
-            showHidePanel(controlpanel, false);
-            stopVideoFeed();
-        }; 
-        var faultpanel = document.getElementById("faultpanel");
-        btn_faultpanel_exit.onclick = function() {showHidePanel(faultpanel, false)}; 
-        //###################################### end of experimental
-
-
-        $.getJSON("http://127.0.0.1:5000/graph", function(data) {
-            graphLayer = L.geoJson(data, {
-                    pointToLayer: function (feature, latlng) {
-                        return L.circleMarker(latlng, towerStyle);
-                }
-            }).on("click", function(e) {
-            var lat = e.layer._latlng.lat;
-            var lng = e.layer._latlng.lng;
-
-            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
-                .done(function(data) {
-                selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
-                drawSelectedTowers(data.tower, false);
-            })});
-        }).done(d => {
-            $("#map").css("margin-top", "0");
-        });
-        
-        $.getJSON("http://127.0.0.1:5000/no_zone", function(data) {
-            nozoneLayer = L.geoJson(data, {
-                    style: no_zoneStyle
-                }
-            ).addTo(myLayer);
-        });
-        
-        selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
-        droneLayer = new L.LayerGroup().addTo(myLayer);
-        routeLayer = new L.LayerGroup().addTo(myLayer);
-        planRouteLayer = new L.LayerGroup().addTo(myLayer);
-        faultsLayer = new L.GeoJSON(); 
-        
-        $.getJSON("http://127.0.0.1:5000/drones", function(json) {
-            json["DroneList"].forEach(function(droneEntry) {
-                var drone = droneEntry["Drone"];
-                drone_dict[drone["id"]] = {
-                    id: drone["id"],
-                    isWorking: drone["isWorking"],
-                    batteryPercentage: drone["batteryPercentage"],
-                    marker: new L.circleMarker([drone["coords"]["y"], drone["coords"]["x"]], droneStyle),
-                    coords: {
-                        x: drone["coords"]["x"],
-                        y: drone["coords"]["y"]
-                    }
-                };
-                drone_dict[drone["id"]].marker.addTo(droneLayer);
-                drone_dict[drone["id"]].marker.on('click', droneClickFunction);
-                drone_dict[drone["id"]].marker.data = drone_dict[drone["id"]];
-            });
-        }).done(function() {
-            RefreshDronesOnInterval(3 * 1000); //amount of time in milliseconds
-        });
-
-        async function RefreshDronesOnInterval(delay) { 
-            setInterval(function() {
-                $.getJSON("http://127.0.0.1:5000/drones", function(json) {
-                    json["DroneList"].forEach(function(droneEntry) {
-                        var drone = droneEntry["Drone"];
-                        if (!_.isEqual(drone, _.omit(drone_dict[drone.id], 'marker'))) {
-                            var oldmarker = drone_dict[drone["id"]].marker
-                            drone_dict[drone["id"]] = {
-                                id: drone["id"],
-                                isWorking: drone["isWorking"],
-                                batteryPercentage: drone["batteryPercentage"],
-                                marker: oldmarker,
-                                coords: {
-                                    x: drone["coords"]["x"],
-                                    y: drone["coords"]["y"],
-                                }
-                            };
-                            var lat = (oldmarker.data.coords.x);
-                            var lng = (oldmarker.data.coords.y);
-                            var newLatLng = new L.LatLng(drone["coords"]["y"], drone["coords"]["x"]);
-                            drone_dict[drone["id"]].marker.setLatLng(newLatLng);
-                        }
-                    })
-                })
-            }, delay); // delay in milliseconds
-        }
-
-
-        loadPlanList();
-
-        var fault_dict = [];
-        $.getJSON("http://127.0.0.1:5000/faults", function(json) {
-            json["FaultList"].forEach(function(faultEntry) {
-                var fault = faultEntry["Fault"];
-                fault_dict[fault["id"]] = {
-                    id: fault["id"],
-                    marker: new L.circleMarker([fault["tower"]["lat"], fault["tower"]["lng"]], faultStyle),
-                    images: fault["images"]
-                };
-                fault_dict[fault["id"]].marker.addTo(faultsLayer);
-                fault_dict[fault["id"]].marker.on('click', faultClickFunction);
-                fault_dict[fault["id"]].marker.data = fault_dict[fault["id"]];
-            });
-        }).done(function() {
-            //RefreshDronesOnInterval(3 * 1000); //amount of time in milliseconds
-        });
-
-        var faultOverlayCanBeRemoved = true;
-        function faultClickFunction(e) { 
-            faultOverlayCanBeRemoved = false;
-            slider.destroy()
-            $(".splide__list").html("")
-            var imgarray = e.target.data.images
-            imgarray.forEach(image => {
-                $(".splide__list").append("<li class='splide__slide'><img class='splideimg' src='" + image + "'></li>")
-            })
-            slider = new Splide( '.splide' ).mount();
-            showHidePanel(faultpanel, true);
-            //preventing the map.click function from removing the panel immediately again
-            setTimeout(function() {
-                faultOverlayCanBeRemoved = true;
-            }, 200);
-        }
-
-
-        /*
-        * The trick with the next two functions is that when you click a drone it will execute the drone layer function which shows the drone info panel, however the map click function
-        * will also execute and immediately remove the panel (because its meant to remove the panel when you click away from the drone, but clicking ON the drone also executes this,
-        * unfortunately. The solution is to have a canBeRemoved boolean set to false when the popup is displayed and changing it back to true after some delay (here 200ms) which means
-        * it will change back AFTER the map function has executed, thus preventing it from removing it in the first place)
-        */
-        var ControlPanelCanBeRemoved = false        
-        map.on("click", function (e) { 
-                if (ControlPanelCanBeRemoved) {
-                    showHidePanel(controlpanel, false);
-                    stopVideoFeed();
-                } 
-                if (faultOverlayCanBeRemoved) {
-                    showHidePanel(faultpanel, false);
-                }
-        });
-
-        function droneClickFunction(e) { 
-            console.log(e)
-                feature = e.target;
-                ControlPanelCanBeRemoved = false;
-                showHidePanel(controlpanel, true);
-                startVideoFeed();
-                var coordx = feature.data.coords.x;
-                var coordy = feature.data.coords.y;
-                document.getElementById("droneinfoname").textContent = "Object type: Drone";
-                document.getElementById("droneinfoid").textContent = "Drone ID: " + feature.data.id;
-                document.getElementById("droneinfobattery").textContent = "Battery Level: " + feature.data.batteryPercentage + "%";
-                document.getElementById("droneinfoworking").textContent = "Drone is Working Already: " + Boolean(feature.data.isWorking);
-                document.getElementById("droneinfocoordinates").textContent = "Drone Coordinates: " + coordx + " , " + coordy;
-                //preventing the map.click function from removing the panel immediately again
-                setTimeout(function() {
-                    ControlPanelCanBeRemoved = true;
-                }, 200);
-            //clickedCircle.bindPopup("POPUP IF WE NEED IT").openPopup();
-        }  
-
-        function showHidePanel (panel, visible) {
-            if (visible) {
-                panel.style.display = "block";
-            } else {
-                panel.style.display = "none";
-                //stop playing in the background and consuming bandwidth on an invisible video
-            }
-        };
-
-        function startVideoFeed() {
-            videojs(videocontainer).src({
-                type: 'application/x-mpegURL',
-                src: 'http://demo.unified-streaming.com/video/tears-of-steel/tears-of-steel.ism/.m3u8'
-            });
-            videojs(videocontainer).play();
-        }
-        function stopVideoFeed() {
-            videojs(videocontainer).pause();
-        }
-
-        //set view of Denmark initially upon launch
-        map.attributionControl.setPrefix('');
-        var denmark = new L.LatLng(55.94612, 10.48645); 
-        map.setView(denmark, 8);
-        
-        //ensure that we zoom in far enough to render the towers, such that we don't get overwhelmed with tower markers that we dont care about
-        map.on('zoomend' , function (e) {
-            var geo = map.getCenter();
-            if (map.getZoom() >9 && towerrender)
-            {
-                $("#sidepanel ul li p").fadeOut(0);
-                myLayer.addLayer(graphLayer);
-                myLayer.addLayer(selectTowerLayer);
-                myLayer.addLayer(faultsLayer);
-            }else {
-                if(towerrender == 1) {
-                    $("#sidepanel ul li p").fadeIn(0);
-                }
-                myLayer.removeLayer(graphLayer);
-                myLayer.removeLayer(selectTowerLayer);
-                myLayer.removeLayer(faultsLayer);
-            }
-        });
-
-        selectTowerLayer.on("click", function(e) {
-            var lat = e.layer._latlng.lat;
-            var lng = e.layer._latlng.lng;
-            $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
-                .done(function(data) {
-                selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
-                selectTowerLayer.removeLayer(e.layer);
-            })
-        });
-    }
-
-        function clearSelection()
-        { 
-        if(selectedTowers.length > 0) {
-            selectedTowers = [];
-            myLayer.removeLayer(selectTowerLayer);
-            selectTowerLayer = new L.GeoJSON().addTo(myLayer); 
-            myLayer.removeLayer(routeLayer);
-            routeLayer = new L.GeoJSON().addTo(myLayer); 
-            $("#addplan_popup").fadeOut(100);
-            $("#planpopup").fadeOut(50);
-
-            selectTowerLayer.on("click", function(e) {
-                var lat = e.layer._latlng.lat;
-                var lng = e.layer._latlng.lng;
-                $.getJSON( "http://127.0.0.1:5000/tower",{'lat':lat,'lng':lng})
-                    .done(function(data) {
-                    selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
-                    selectTowerLayer.removeLayer(e.layer);
-                })
-            });
-        }
-        }
-
-    function route() {
-        var drns = [];  
-        var routePromises = [];
-        myLayer.removeLayer(routeLayer);
-        routeLayer = new L.GeoJSON().addTo(myLayer);
-        const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
-
-        var length = (Object.keys(drone_dict).length);
-
-        for(var i = 0; i < length; i++) {
-            let id = drone_dict[i].id;
-
-            var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].coords.y, drone_dict[i].coords.x));
-    
-            var request = $.getJSON( "http://127.0.0.1:5000/tower",{'lat':nearest.lat,'lng':nearest.lng})
-                .done(function(data) {
-                    drns.push([id+"", data.tower[0], data.tower[2], data.tower[1]]);
-                    selectedTowers = uniq(selectedTowers);
-            });
-            routePromises.push(request);
-        }
-
-        $.when.apply(null, routePromises).done(data => {
-            var shortestPath = Infinity;
-            var shortestDrone;
-
-            if(drns.length > 0) {
-                $.getJSON( "http://127.0.0.1:5000/vrp",{'drones':drns,'towers':selectedTowers})
-                    .done(function(data) {
-                        for(drone in data) {
-                            if(data[drone].distance > 0) {
-                                    drawRoute(data[drone]);
-                            }
-                        }
-                        $("#addplan_popup").fadeIn(100);
-                        lastVRP = data;
-                });
-            }
-        });
-    } 
-
-    function drawRoute(drone) {
-       return new L.polyline(drone.path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(routeLayer);   
-    }
-
-    function drawSelectedTowers(tower, changeOrder) {
-        if(changeOrder) 
-            return new L.circleMarker([tower[2], tower[1]], selectStyle).addTo(selectTowerLayer);
-        return new L.circleMarker([tower[1], tower[2]], selectStyle).addTo(selectTowerLayer);
-    }
-
-    function loadPlanList() {
-        $("#plantab_active > ul").html("");
-        $("#plantab_inactive > ul").html("");
-        $("#plantab_done > ul").html("");
-        $.getJSON("http://127.0.0.1:5000/plans").done(data => {
-            data["PlanList"].forEach(e => {
-                if(e["done"]) { //adds done plans to the correct tab
-                    $("#plantab_done > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
-                } else if(!e["done"] && !e["active"]) { //adds inactive plans to the correct tab
-                    $("#plantab_inactive > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
-                } else { //adds active plans to the correct tab
-                    $("#plantab_active > ul").append("<li onclick='show_plan(" + e["id"] + ")'><h4>" + e["name"] + "</h4></li>")
-                }                
-            })
-            $("#addplan_popup").fadeOut(100);
-            clearSelection();
-        })
-    }
-
-    function activate_plan(id) {
-        clearSelection();
-        $.ajax({
-            method: "POST",
-            url: "http://127.0.0.1:5000/activate_plan",
-            data: {"id" : id}
-        }).done(e => {
-            loadPlanList();
-        });
-    }
-
-    function remove_plan(id) {
-        clearSelection();
-        $.ajax({
-            method: "POST",
-            url: "http://127.0.0.1:5000/delete_plan",
-            data: {"id" : id}
-        }).done(e => {
-            loadPlanList();
-        });
-    }
-
-    function show_plan(id) {
-        clearSelection();
-        $.getJSON("http://127.0.0.1:5000/get_plan", {"id" : id}).done(data => {
-            selectedTowers = data["towers"];
-            selectedTowers.forEach(tower => {
-                drawSelectedTowers(tower, true)
-            })
-            droneplanshtml = ""
-
-            data["plan"].forEach(droneplan => {
-                drawRoute(droneplan)
-                droneplanshtml += "<li> <p>Drone ID: " + droneplan["drone"]+ "</p><p>Distance: " + droneplan["distance"] + "</p> </li>";
-            });
-
-            $("#planpopup").fadeIn(50);
-            
-            if(data["active"] || data["done"]) {
-                $("#planpopup #activate_btn").fadeOut(0);
-            } else {
-                // $("#planpopup #delete_btn").fadeIn(0);
-                $("#planpopup #activate_btn").fadeIn(0);
-            }
-
-            $("#planpopup #delete_btn").attr("onclick", "remove_plan("+ id +")");
-            $("#planpopup #activate_btn").attr("onclick", "activate_plan("+ id +")");
-
-            //Should change when responsive design is implemented
-            var left = $("#sidepanel").width() + 10;
-            $("#planpopup").css("left", left);
-            $("#planpopup h3").html(""+ data["name"])
-            $("#planpopup_towers").html("Towers: "+ selectedTowers.length)
-            $("#planpopup_drones").html("Drones: "+ data["plan"].length)
-            $("#droneplans ul").html(droneplanshtml);
-        })
-    }
-
-    function uniq(a) {
-        var uniID = [];
-        var unArr = [];
-        
-        for(var i = 0; i < a.length; i++) {
-            if(!uniID.includes(a[i][0])) {
-                uniID.push(a[i][0]);
-                unArr.push(a[i]);
-            }
-        }
-        return unArr;
-    }
-
-    /* 
-    * Workaround for 1px lines appearing in some browsers due to fractional transforms
-    * and resulting anti-aliasing.
-    * https://github.com/Leaflet/Leaflet/issues/3575
-    */
-    (function(){
-        var originalInitTile = L.GridLayer.prototype._initTile
-        L.GridLayer.include({
-            _initTile: function (tile) {
-                originalInitTile.call(this, tile);
-                var tileSize = this.getTileSize();
-                tile.style.width = tileSize.x + 1 + 'px';
-                tile.style.height = tileSize.y + 1 + 'px';
-            }
-        });
-    })()     
-
-    var slider;
-document.addEventListener( 'DOMContentLoaded', function () {
-		slider = new Splide( '.splide' ).mount();
-	} );
-</script>  
+<link rel="stylesheet" href="http://localhost:5000/stylesheet">
+<script src="http://localhost:5000/javascript"></script>
 </head>
-<body onLoad="javascript:init();">
-    <div id="loading">Loading...</div>
-    <div id="sidepanel">
-        <h1>Title</h1>
-        <ul>
-            <li id="noflyrender">No fly zones<img></li>
-            <li id="towerrender">Towers <p>Zoom in</p><img></li>
-            <li id="dronerender">Drones <img></li>
-            <li id="routerender">Routes <img></li>
-        </ul>
-        
-        <button onclick="route();">Test</button>
-        
-        <div id="planpanel">
-            <div id="plantab_inactive">
-                <br><hr><br>
-                <h3>Plans - Inactive</h3>
-                <ul></ul>
-            </div>  
-            <div id="plantab_active">
-                <br><hr><br>
-                <h3>Plans - Active</h3>
-                <ul></ul>
-            </div>  
-            <div id="plantab_done">
-                <br><hr><br>
-                <h3>Plans - Done</h3>
-                <ul></ul>
-            </div>  
+<body>
+  <div id="navbar" class="d-flex flex-column mb-3 justify-content-center">
+        <div class="p-2 bd-highlight align-self-center">
+          <svg id="droneicon" class="icon_drone" xmlns="http://www.w3.org/2000/svg" width="2.35rem" height="2.35rem" viewBox="26 35 130 130">
+            <polygon class="st1" points="102.61,70.13 77.31,70.13 72.31,112.19 72.31,112.19 77.31,123.73 102.61,123.73 107.61,112.19 
+            107.61,112.19 "/>
+          <path class="st1" d="M75.94,81.68l1.37-11.55l-22.69-6.44c0,0,0.53,1.85-0.45,3.93c-1.2,2.55-2.62,2.86-2.62,2.86L75.94,81.68z"/>
+          <path class="st1" d="M72.31,112.19l5,11.54l-21.04,11c-0.42,0.22-0.6,0.1-0.68-0.37c-0.08-0.49-0.54-1.62-1.05-2.41
+            c-1.4-2.14-3.2-2.53-3.2-2.53L72.31,112.19z"/>
+          <path class="st1" d="M103.99,81.68l-1.37-11.55l22.92-6.5c0,0-0.51,1.95,0.38,3.93c1.16,2.57,2.67,2.83,2.67,2.83L103.99,81.68z"/>
+          <path class="st1" d="M107.61,112.19l-5,11.54l20.86,11.01c0.75,0.39,0.81,0.36,1.15-0.8c0.11-0.39,0.46-1.39,0.76-1.86
+            c1.4-2.14,3.2-2.65,3.2-2.65L107.61,112.19z"/>
+          <g class="dr_g1">
+            <path class="st2" d="M34.17,77.04c-4.09-4.92-5.56-11.81-3.28-18.28c3.45-9.8,14.19-14.94,23.99-11.49"/>
+            <path class="st2" d="M63.73,76.24c-4.79,6.44-13.38,9.32-21.35,6.51"/>
+            <path class="st2" d="M63.29,53.22c3.13,3.89,4.64,8.96,4.01,14.07"/>
+          </g>
+          <g class="dr_g1">
+            <path class="st2" d="M118.31,120.99c4.94-4.22,11.93-5.77,18.5-3.46"/>
+            <path class="st2" d="M116.1,147.3c-4.09-4.92-5.56-11.81-3.28-18.28"/>
+            <path class="st2" d="M145.22,123.48c3.94,4.9,5.32,11.67,3.08,18.04c-3.45,9.8-14.19,14.94-23.99,11.49"/>
+          </g>
+          <g class="dr_g1"> 
+            <path class="st2" d="M112.63,67.29c-0.6-4.95,0.75-10.12,4.17-14.27"/>
+            <path class="st2" d="M137.61,82.73c-6.03,2.14-13,1.15-18.29-3.22c-1.16-0.95-2.17-2.02-3.03-3.16"/>
+            <path class="st2" d="M125.29,47.18c5.96-2,12.79-0.97,18,3.33c8.01,6.62,9.13,18.47,2.52,26.48"/>
+          </g>
+          <g class="dr_g1">
+            <path class="st2" d="M55.68,152.99c-6.03,2.14-13,1.15-18.29-3.22c-8.01-6.62-9.13-18.47-2.52-26.48"/>
+            <path class="st2" d="M67.31,129.6c1.85,5.88,0.78,12.55-3.44,17.65"/>
+            <path class="st2" d="M43.35,117.44c5.96-2,12.79-0.97,18,3.33"/>
+          </g>
+          <g class="dr_g2">
+            <line class="st2" x1="61.17" y1="48.1" x2="52.7" y2="60.16"/>
+            <line class="st2" x1="44.83" y1="71.38" x2="36.36" y2="83.44"/>
+          </g><g class="dr_g2">
+          <line class="st2" x1="142.96" y1="117.6" x2="134.5" y2="129.66"/>
+          <line class="st2" x1="126.62" y1="140.88" x2="118.15" y2="152.94"/>
+          </g><g class="dr_g2">
+          <line class="st2" x1="143.74" y1="82.65" x2="135.25" y2="70.61"/>
+          <line class="st2" x1="127.35" y1="59.41" x2="118.85" y2="47.37"/>
+          </g><g class="dr_g2">
+          <line class="st2" x1="62.1" y1="152.61" x2="53.61" y2="140.57"/>
+          <line class="st2" x1="45.7" y1="129.37" x2="37.21" y2="117.33"/>
+          </g>
+          <circle class="st2" cx="49.3" cy="135.27" r="6.18"/>
+          <circle class="st2" cx="130.56" cy="135.27" r="6.18"/>
+          <circle class="st2" cx="48.53" cy="64.99" r="6.18"/>
+          <circle class="st2" cx="131.47" cy="64.99" r="6.18"/>
+          </svg>
         </div>
-    </div>
-    <div id="planpopup">
-        <div class="x_btn" onclick="clearSelection()">X</div>
-        <h3></h3>
-        <p id="planpopup_towers"></p>
-        <p id="planpopup_drones"></p>
-        <div id="droneplans" style="margin-left: 10px; padding: 5px 10px; border: 1px solid #919191;"><ul></ul></div>
-        <button id="activate_btn">Activate</button>
-        <button id="delete_btn">Delete</button>
-    </div>
-    <div id="addplan_popup">
-        <h3>Add flight plan:</h3> <br>
-        <input type="text" id="planname" placeholder="Name of plan" autocomplete="off">
-        <button id="addplan_btn">Add</button>
-        <button style="background-color: rgb(184, 14, 14);" onclick="clearSelection()">Cancel</button>
-    </div>
-    <div id="map"></div>
-    <div id="changeMapType"><p unselectable="on">Satellite</p></div>
-    <!-- ######################### Mission control panel ######################### -->
-    <div id="controlpanel" class="controlpanel">
-        <div id="livefeed">
-            <video
-                id="livefeedvideo"
-                class="video-container"
-                height="250px"
-                width="250px"
-                muted
-                preload="auto"
-                poster="MY_VIDEO_POSTER.jpg"
-            >
-            </video>
-            <script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
-        </div>
-    
-        <div id="droneinfo">
-            <p id="droneinfoname" class="droneinfoparagraph"></p>
-            <p id="droneinfoid" class="droneinfoparagraph"></p>
-            <p id="droneinfobattery" class="droneinfoparagraph"></p>
-            <p id="droneinfoworking" class="droneinfoparagraph"></p>
-            <p id="droneinfocoordinates" class="droneinfoparagraph"></p>
-        </div>
-        
-        <button id="btn_controlpanel_exit" type="button" class="controlpanel-button">X</button>
-    </div>
-    <div id="faultpanel" class="controlpanel">
-        <div class="splide">
-            <div class="splide__track">
-                <ul class="splide__list">
-                    
-                </ul>
+        <div class="p-2 bd-highlight align-self-center"><svg xmlns="http://www.w3.org/2000/svg" width="2.35rem" height="1.75rem" fill="#bbe1fa" class="bi bi-card-checklist" viewBox="0 5 16 6">
+          <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+          <path d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 -9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+        </svg></div>
+        <div class="p-2 bd-highlight align-self-center"><svg id="layerVisIcon" xmlns="http://www.w3.org/2000/svg" width="2.35rem" height="2.35rem" fill="#bbe1fa" class="bi bi-gear" viewBox="0 0 16 16">
+          <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+          <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+        </svg></div>
+        <div class="p-2 bd-highlight align-self-center">
+          <svg id="satellite" class="icon_drone" xmlns="http://www.w3.org/2000/svg" width="2.35rem" height="2.35rem" fill="#bbe1fa" viewBox="26 35 130 130">
+            <path class="st0" d="M80.65,42.41c11.88,11.88,11.88,31.13,0,43.01s-31.13,11.88-43.01,0L80.65,42.41z"/>
+            <polyline style="stroke-width: 4;" class="st0" points="67.49,54.34 46.85,52.09 49.11,72.72 "/>
+            <line class="st0" x1="46.85" y1="52.09" x2="58.34" y2="63.58"/>
+            <path class="st0" d="M111.89,117.12L111.89,117.12c-6.48,6.48-17,6.48-23.48,0L68.88,97.6l23.48-23.48l19.52,19.52
+              C118.37,100.12,118.37,110.64,111.89,117.12z"/>
+            <rect x="102.7" y="53.73" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -10.6068 107.7899)" class="st0" width="44.22" height="25.93"/>
+            <rect x="38.99" y="117.44" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -74.3144 81.4013)" class="st0" width="44.22" height="25.93"/>
+            <line class="st0" x1="46.37" y1="145.13" x2="81.22" y2="110.29"/>
+            <line class="st0" x1="105.95" y1="85.56" x2="140.44" y2="51.07"/>
+            <line class="st0" x1="57.63" y1="115.54" x2="75.93" y2="133.84"/>
+            <line class="st0" x1="46.82" y1="126.35" x2="65.12" y2="144.65"/>
+            <line class="st0" x1="121.03" y1="52.15" x2="139.33" y2="70.45"/>
+            <line class="st0" x1="110.22" y1="62.95" x2="128.52" y2="81.25"/>
+        </svg></div>
+  </div>
+  <div class="col-md-3 col-sm-4 col-6" id="layerVis">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+          <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+            <h4>Layer Visibility</h4>
+          </div>
+          <div class="ml-auto p-2 bd-highlight align-self-center">
+            <svg onclick="clearSidePanel()" xmlns="http://www.w3.org/2000/svg" width="3rem" height="3rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </div>
+      </div>
+      <div id="layerVisControls">
+          <div class="d-flex bd-highlight">
+            <div class="p-2 flex-grow-1 bd-highlight"><p>Towers</p></div>
+            <div style="padding: 0 1.3rem" class="align-self-center" id="layerVisTower">
+              <svg xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-toggle-on" viewBox="0 0 16 16">
+                <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              </svg>
             </div>
+          </div>
+
+          <div class="d-flex bd-highlight">
+            <div class="p-2 flex-grow-1 bd-highlight"><p>Drones</p></div>
+            <div style="padding: 0 1.3rem" class="align-self-center" id="layerVisDrone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-toggle-on" viewBox="0 0 16 16">
+                <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="d-flex bd-highlight">
+            <div class="p-2 flex-grow-1 bd-highlight"><p>No Fly Zone</p></div>
+            <div style="padding: 0 1.3rem" class="align-self-center" id="layerVisNoFly">
+              <svg xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-toggle-on" viewBox="0 0 16 16">
+                <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="d-flex bd-highlight">
+            <div class="p-2 flex-grow-1 bd-highlight"><p>Routes</p></div>
+            <div style="padding: 0 1.3rem" class="align-self-center" id="layerVisRoute">
+              <svg xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-toggle-on" viewBox="0 0 16 16">
+                <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              </svg>
+            </div>
+          </div>
+      </div>
+  </div>
+  <div class="col-md-3 col-sm-4 col-6" id="plans">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+        <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+          <h4>Plans</h4>
         </div>
-        <button id="btn_faultpanel_exit" type="button" class="controlpanel-button">X</button>
+        <div class="ml-auto p-2 bd-highlight align-self-center">
+          <svg onclick="clearSidePanelPlans()" xmlns="http://www.w3.org/2000/svg" width="3rem" height="3rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </div>
+      </div>
+      <div id="plans_wrapper">
+        <div class="col-12" id="active_plans_folder">
+          <div class="d-flex bd-highlight justify-content-end popup_header">
+            <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+              <h5>Active Plans</h5>
+            </div>
+            <div class="ml-auto p-2 bd-highlight align-self-center">
+              <svg onclick="openPlansFolder('active')" xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+              </svg>
+            </div>  
+          </div>
+          <div class="plans_folder_dropdown"><ul></ul></div>
+        </div>
+        <div class="col-12" id="idle_plans_folder">
+          <div class="d-flex bd-highlight justify-content-end popup_header">
+            <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+              <h5>Idle Plans</h5>
+            </div>
+            <div class="ml-auto p-2 bd-highlight align-self-center">
+              <svg onclick="openPlansFolder('idle')" xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+              </svg>
+            </div>  
+          </div>
+          <div class="plans_folder_dropdown"><ul></ul></div>
+        </div>
+        <div class="col-12" id="finished_plans_folder">
+          <div class="d-flex bd-highlight justify-content-end popup_header">
+            <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+              <h5>Finished Plans</h5>
+            </div>
+            <div class="ml-auto p-2 bd-highlight align-self-center">
+              <svg onclick="openPlansFolder('finished')" xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+              </svg>
+            </div>  
+          </div>
+          <div class="plans_folder_dropdown"><ul></ul></div>
+        </div>
+      </div>
+  </div>
+  <div id="showplanPopup" class="offset-md-3 offset-sm-4 offset-6 offset-xl-3">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+        <div class="p-2 flex-grow-1 bd-highlight align-self-center"><h5></h5></div>
+        <div class="ml-auto p-2 bd-highlight align-self-center">
+          <svg onclick="clearSelectionPlan()" xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </div>
+      </div>
+      <div id="planpopup_info">
+        <p id="planpopup_towers"></p><p id="planpopup_drones"></p><ul></ul>
+        <button class="btn-drone" id="activate_btn">Start</button>
+        <button class="btn-drone" id="remove_btn">Remove</button>
+      </div>
+  </div>
+  <div class="col-md-3 col-sm-4 col-6" id="drone_panel">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+        <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+          <h4>Drones</h4>
+        </div>
+        <div class="ml-auto p-2 bd-highlight align-self-center">
+          <svg onclick="clearSidePanel()" xmlns="http://www.w3.org/2000/svg" width="3rem" height="3rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </div>
+      </div>
+      <div id="drone_panel_wrapper"><ul></ul></div>
+  </div>
+  <div id="calculateRoutePopup">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+        <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+          <h5>Selection</h5>
+        </div>
+        <div class="ml-auto p-2 bd-highlight align-self-center">
+          <svg onclick="clearSelection()" xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </div>
+      </div>
+      <p>Towers: </p>
+      <button onclick="route();" tabindex="-1">Calculate Route</button>
+  </div>
+  <div id="addplanPopup">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+        <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+          <h5>Add Plan</h5>
+        </div>
+        <div class="ml-auto p-2 bd-highlight align-self-center">
+          <svg onclick="clearRoute()" xmlns="http://www.w3.org/2000/svg" width="2.5rem" height="2.5rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </div>
+      </div>
+      <p id="tower_amnt">Towers:</p>
+      <p id="drone_amnt">Drones:</p>
+      <input type="text" placeholder="Plan Name" tabindex="-1"> <br>
+      <button tabindex="-1">Add Plan</button>
+  </div>   
+  <div class="col-lg-4 col-md-6 col-sm-9 col-10" id="droneinfo_panel">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+         <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+            <h4 id="droneinfoid">Drone</h4>
+         </div>
+         <div class="ml-auto p-2 bd-highlight align-self-center">
+            <svg onclick="clearSidePanel()" xmlns="http://www.w3.org/2000/svg" width="3rem" height="3rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+               <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+         </div>
+      </div>
+      <div id="droneinfo_panel_wrapper">
+         <div id="videocontainer">
+            <video 
+            id="livefeedvideo"
+            muted
+            preload="auto"
+            >
+         </video>
+         </div>
+    <div id="droneinfo">
+       <p id="droneinfobattery" class="droneinfoparagraph"></p>
+       <p id="droneinfoworking" class="droneinfoparagraph"></p>
+       <p id="droneinfocoordinates" class="droneinfoparagraph"></p>
     </div>
+   </div>
+  </div>
+  <div class="col-lg-4 col-md-6 col-sm-9 col-10" id="faultinfo_panel">
+      <div class="d-flex bd-highlight justify-content-end popup_header">
+         <div class="p-2 flex-grow-1 bd-highlight align-self-center">
+            <h4 id="faultinfoid">Fault</h4>
+         </div>
+         <div class="ml-auto p-2 bd-highlight align-self-center">
+            <svg onclick="clearSidePanel()" xmlns="http://www.w3.org/2000/svg" width="3rem" height="3rem" fill="#bbe1fa" class="bi bi-x" viewBox="0 0 16 16">
+               <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+         </div>
+      </div>
+      <div id="faultinfo_panel_wrapper">
+       <div class="splide">
+          <div class="splide__track">
+             <ul class="splide__list">
+             </ul>
+          </div>
+       </div>
+    </div>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
 </body>
-<script>
-$("#noflyrender img").attr("src", yesrender);
-$("#towerrender img").attr("src", yesrender);
-$("#dronerender img").attr("src", yesrender);    
-$("#routerender img").attr("src", yesrender);    
-
-$('#towerrender').click(function() {
-    if(towerrender == 1) {
-        $("#towerrender img").attr("src", norender);
-        myLayer.removeLayer(graphLayer);
-        myLayer.removeLayer(selectTowerLayer);
-        myLayer.removeLayer(faultsLayer);
-        $("#sidepanel ul li p").fadeOut(0);
-        towerrender = 0;
-    } else {
-        $("#towerrender img").attr("src", yesrender);
-        if(map.getZoom() > 10) {
-            myLayer.addLayer(graphLayer);
-            myLayer.addLayer(selectTowerLayer);
-            myLayer.addLayer(faultsLayer);
-        } else {
-            $("#sidepanel ul li p").fadeIn(0);
-        }
-        towerrender = 1;
-    }
-});
-    
-$('#routerender').click(function() {
-    if(routerender == 1) {
-        $("#routerender img").attr("src", norender);
-        myLayer.removeLayer(routeLayer);
-        routerender= 0;
-    } else {
-        $("#routerender img").attr("src", yesrender);
-        myLayer.addLayer(routeLayer);
-        routerender = 1;
-    }
-});
-    
-$('#dronerender').click(function() {
-    if(dronerender == 1) {
-        $("#dronerender img").attr("src", norender);
-        myLayer.removeLayer(droneLayer);
-        dronerender= 0;
-    } else {
-        $("#dronerender img").attr("src", yesrender);
-        myLayer.addLayer(droneLayer);
-        dronerender = 1;
-    }
-});
-    
-$('#noflyrender').click(function() {
-    if(nozonerender == 1) {
-        $("#noflyrender img").attr("src", norender);
-        myLayer.removeLayer(nozoneLayer);
-        nozonerender = 0;
-    } else {
-        $("#noflyrender img").attr("src", yesrender);
-        myLayer.addLayer(nozoneLayer);
-        nozonerender = 1;
-    }
-});
-
-$("#addplan_popup #addplan_btn").click(function() {
-    if ($('#addplan_popup input').val().length > 0) {
-        $.ajax({
-            type: "POST",
-            url: "http://127.0.0.1:5000/add_plan",
-            data: {"vrp": JSON.stringify(lastVRP), "name" : $('#addplan_popup input').val(), 'towers': JSON.stringify(selectedTowers) }
-        }).done(function(data) {
-            $('#addplan_popup input').val("");
-            loadPlanList()
-        })
-    } else {
-        alert("You must enter a name for the plan");
-    }
-}); 
-
-$("#changeMapType").click(() => {
-    var test = $("#changeMapType p").html() == "Satellite"
-    if(test) { // change to satelite mode
-        $("#changeMapType p").html("Map")
-        googleHybrid.addTo(map);
-    } else {
-        $("#changeMapType p").html("Satellite")
-        map.removeLayer(googleHybrid);
-    }
-})
-</script>
 </html>

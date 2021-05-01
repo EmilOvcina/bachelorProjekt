@@ -24,8 +24,8 @@ PyGeoj==1.0.0
 pyproj==3.0.0.post1
 requests==2.25.1
 scipy==1.6.0
-setproctitle==1.2.2
 Shapely==1.7.1
+setproctitle==1.2.2
 six==1.15.0
 stevedore==3.3.0
 urllib3==1.26.3

@@ -1,0 +1,624 @@
+:root {
+  --primary: #1b262c;
+  --blue100: #0f4c75;
+  --blue200: #3282b8;
+  --blue300: #bbe1fa;
+  --blueShadow200: #276894;
+  --blueShadow300: #96b6ca;
+}
+
+* {
+  z-index: 1
+}
+
+body {
+  overflow: hidden;
+}
+
+.leaflet-control-zoom,.leaflet-bar, .leaflet-control .leaflet-control-zoom-in, .leaflet-control .leaflet-control-zoom-out {
+  color: var(--blue300) !important;
+  background-color: var(--primary);
+}
+
+@media(hover: hover) {
+.leaflet-control .leaflet-control-zoom-in:hover, .leaflet-control .leaflet-control-zoom-out:hover {
+  background-color: var(--blue100);
+}}
+
+/* width */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: 0;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--blue300); 
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blue300); 
+}
+
+.vjs-control-bar, .vjs-hidden, .vjs-control-text, .vjs-text-track-display, .vjs-big-play-button, .vjs-loading-spinner, .vjs-modal-dialog-content {
+  display: none;
+}
+
+#livefeedvideo_html5_api, #livefeedvideo {
+  width: 100%;
+  height: auto;
+}
+
+#droneinfo {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.droneinfoparagraph {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+#droneinfowrapper, #faultinfo_panel_wrapper {
+  width: 98%;
+  overflow-y: scroll;
+}
+
+#droneinfo_panel_wrapper {
+  width: 98%;
+  margin-left: 1%;
+}
+
+#faultinfo_panel_wrapper {
+  margin-left: 0.5rem;
+}
+
+.splide__slide {
+  margin-bottom: 2rem;
+}
+
+#droneinfo_panel, #faultinfo_panel {
+  background-color: var(--primary);
+  color: var(--blue300);
+  border-bottom-right-radius: 10px;
+  position: absolute;
+  top: 0; 
+  left: -410px;
+  display: none;
+}
+
+.container, .container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.leaflet-top, .leaflet-left {
+  bottom: 25px !important;
+  right: 10px !important;
+  top:auto;
+  left:auto;
+}
+
+#navbar {
+  background-color: var(--primary);
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-bottom-left-radius: 10px;
+  width: 4.20rem;
+  padding: 10px 0 0 0;
+  z-index: 2;
+}
+
+#navbar div{
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+@media(hover: hover) {
+#navbar svg:hover {
+  fill: var(--blue200);
+}}
+
+#layerVis, #drone_panel {
+  background-color: var(--primary);
+  color: var(--blue300);
+  max-width: 400px;
+  border-bottom-right-radius: 10px;
+  position: absolute;
+  top: 0; 
+  left: -410px;
+  display: none;
+}
+
+.popup_header {
+  padding: 10px 0;
+}
+
+.popup_header h4{
+  text-align: center;
+  margin-bottom: 0px;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+@media(hover: hover) {
+.popup_header > div > svg:hover {
+  fill: var(--blue200);
+  cursor: pointer;
+}}
+
+#layerVisControls > div > div > p{
+  text-indent: 1.2rem;
+  font-size: 1.3rem;
+  margin-bottom: 0;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}  
+
+@media(hover: hover) {
+#layerVisControls > div > div > svg:hover, #drone_panel_wrapper ul li > div > div > svg:hover{
+  fill: var(--blue200);
+  cursor: pointer;
+}}
+
+#layerVisControls {
+  padding-bottom: 10px;
+}
+
+#drone_panel_wrapper {
+  width: 98%;
+  overflow-y: scroll;
+}
+
+#drone_panel_wrapper ul {
+  list-style: none;
+  padding-left: 1.3rem;
+}
+
+#drone_panel_wrapper ul li {
+  border-bottom: 1px solid var(--blue300);
+}
+
+#drone_panel_wrapper ul li:first-of-type {
+  border-top: 1px solid var(--blue300);
+}
+
+@media(hover: hover) {
+#drone_panel_wrapper ul li div p:hover{
+  text-decoration: underline;
+  color: var(--blue200);
+  cursor: pointer;
+}}
+
+#drone_panel_wrapper ul li p {
+  font-size: 1.3rem;
+  margin-bottom: 0;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#drone_panel_wrapper ul li small {
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#plans {
+  color: var(--blue300);
+  max-width: 400px;
+  position: absolute;
+  top: 0; 
+  left: -410px;
+  display: none;
+}
+
+#plans {
+  background-color: var(--primary);
+  border-bottom-right-radius: 10px;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#plans > div:nth-child(1n + 2) h5 {
+  margin:0 10px;
+  font-weight: bold;
+}
+
+#plans > div:nth-child(1n + 2) .popup_header {
+  padding: 0;
+}
+
+#plans > div:nth-child(1n + 2) svg {
+  font-size: 1rem;
+}
+
+.plans_folder_dropdown {
+  display:none;
+  padding-bottom: 1px;
+}
+
+.plans_folder_dropdown ul{
+  list-style: none;
+  padding-left: 1rem;
+}
+
+.plans_folder_dropdown ul li {
+  padding: 0.5rem 0;
+  max-width: 85%;
+  border-bottom: 1px solid var(--blue300);
+  cursor: pointer;
+}
+
+@media(hover: hover) { 
+.plans_folder_dropdown ul li:hover {
+  background-color: #0d3e5f;
+}}
+
+.plans_folder_dropdown ul li:nth-child(1000n + 1) {
+  border-top: 1px solid var(--blue300);
+  margin-top: 0.5rem;
+}
+
+#plans_wrapper {
+  overflow-y: scroll;
+  width: 98%;
+  margin-bottom: 0.3rem;
+}
+
+#showplanPopup {
+  position: absolute;
+  top: 0;
+  display: none;
+  left: 2px;  
+  color: var(--blue300);
+  background-color: var(--primary);
+  width: 11rem;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#showplanPopup ul {
+  list-style: none;
+  padding-left: 0;
+  padding: 0 0.5rem;
+  margin-top: 10px;
+  margin-bottom: 0.5rem;
+}
+
+#showplanPopup ul li {
+  background-color: var(--blue100);
+  border-bottom: 2px solid var(--primary);
+  padding: 0.4rem;
+}
+
+#planpopup_info {
+  overflow-y: scroll;
+  max-height: 19rem;
+}
+
+#planpopup_info button{
+  margin: 0 0 0.5rem 0.2rem;
+}
+
+#planpopup_info button:nth-child(3n + 1) {
+  margin: 0 0 0.5rem 0.5rem;
+}
+
+.btn-drone {
+  color: var(--primary);
+  background-color: var(--blue300);
+  border: 0;
+  border-bottom: 3px solid var(--blueShadow300);
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-color: var(--blue300);
+  cursor: pointer;
+  padding: 0.3rem 0.8rem;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+@media(hover: hover) {
+#showplanPopup ul li:hover {
+  background-color: var(--blueShadow200);
+  cursor: pointer;
+}}
+
+#calculateRoutePopup, #addplanPopup {
+  position: absolute;
+  top: -300px;
+  right: 4.75rem;
+  background-color: var(--primary);
+  color:var(--blue300);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  display: none;
+}
+#calculateRoutePopup .popup_header, #addplanPopup .popup_header {
+  padding: 0;
+}
+
+#calculateRoutePopup h5, #addplanPopup h5, #showplanPopup h5 {
+  text-align: center;
+  margin-bottom: 0px;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+#calculateRoutePopup p, #addplanPopup p, #showplanPopup p {
+  text-indent: .5rem;
+  margin-bottom: 0;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#calculateRoutePopup button, #addplanPopup button {
+  margin: .5rem;
+  width: 9rem;
+  border: 0;
+  background-color: var(--blue300);
+  color: var(--primary);
+  cursor: pointer;
+  border-bottom: 3px solid var(--blueShadow300);
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+@media(hover: hover) { 
+#calculateRoutePopup button:hover, #addplanPopup button:hover, .btn-drone:hover {
+  background-color: var(--blue200);
+  border-bottom-color: var(--blueShadow200);
+}
+}
+
+#addplanPopup input {
+  margin: calc(24px - 1rem) .5rem;
+  width: 9rem;
+  background-color: var(--blue100);
+  border: 0;
+  color: var(--blue300);
+  padding: 5px 2px;
+}
+
+#addplanPopup input:focus {
+  outline: none !important;
+  border:1px solid var(--blue300);
+  box-shadow: 0 0 5px #719ECE;
+}
+
+@media(hover: hover) {
+#addplanPopup input:hover {
+  background-color: #0d3e5f;
+}}
+
+#addplanPopup input::placeholder {
+  opacity: .7;
+  color: var(--blue300);
+}
+
+.icon_drone  {
+   fill: var(--blue300);
+}
+
+.st0 {
+  fill:none;
+  stroke:var(--blue300);
+  stroke-width:8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-miterlimit:20;
+}
+
+.st1 {
+  fill:none;
+  stroke:var(--blue300);
+  stroke-width:7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-miterlimit:10;
+}
+
+.st2 {
+  fill:none;
+  stroke:var(--blue300);
+  stroke-width:7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-miterlimit:10;
+}
+
+line .st2 {
+  stroke-width:5;
+}
+
+.st3 {
+  fill:none;
+  stroke:var(--blue300);
+  stroke-width:7;
+  stroke-linecap:round;
+  stroke-miterlimit:10;
+}
+
+@media(hover: hover) {
+.icon_drone:hover {
+  cursor: pointer;
+  fill: var(--blue200);
+}
+
+#droneicon:hover .dr_g1, #droneicon:hover .dr_g2 {
+  animation-play-state: paused;
+  animation-iteration-count: 0;
+}
+
+.icon_drone:hover .st0, .icon_drone:hover .st2, .icon_drone:hover .st1, .icon_drone:hover .st3 {
+  stroke: var(--blue200);  
+}}
+
+#satellite {
+  animation-name: satelliteAnimation;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+  animation-timing-function: linear;
+}
+
+@media(hover: hover) {
+#satellite:hover {
+  animation-play-state: paused;
+  animation-iteration-count: 0;
+}}
+
+.bi-gear {
+  animation-name: gearAnimation;
+  animation-duration: 4s;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+  animation-timing-function: linear;
+}
+
+@media(hover: hover) {
+.bi-gear:hover, .bi-card-checklist:hover path:nth-child(1n + 2) {
+  animation-play-state: paused;
+  animation-iteration-count: 0;
+}}
+
+.bi-card-checklist path:nth-child(1n + 2){
+  animation-name: planAnimation;
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+  animation-timing-function: linear; 
+}
+
+#droneicon .dr_g1, #droneicon .dr_g2 {
+  animation-name: droneAnimation;
+  animation-duration: .7s;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+  animation-timing-function: linear;
+  transform-box: fill-box;
+  transform-origin: center; 
+}
+
+@keyframes droneAnimation {
+  0% {
+    opacity: 1;
+    transform: rotate(0);
+  }
+  50% {
+    opacity: .95;
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes planAnimation {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .61;
+  }
+  100% {
+    opacity: 1;
+    d: path("M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 19.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z");
+  }
+}
+
+@keyframes satelliteAnimation {
+  0%, 100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+}
+
+@keyframes gearAnimation {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  float: left;
+  z-index: 0;  
+}
+
+/* Medium devices */
+@media (max-width: 992px) {
+  html {
+    font-size: 85%;
+  }
+}
+
+/* Small devices - Phones*/
+@media (max-width: 768px) { 
+  html {
+    font-size: 75%;
+  }
+}
+
+/* Really small devices - small Phones*/
+@media (max-width: 320px) { 
+  html {
+    font-size: 65%;
+  }
+  #showplanPopup {
+    left: 1px;
+  }
+}
+
+/* large devices - monitors*/
+@media (min-width: 1598px) { 
+  #showplanPopup {
+    left: 403px;
+    margin-left:0;
+  }
+}

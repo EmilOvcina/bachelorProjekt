@@ -526,7 +526,7 @@ def vehicle_routing_problem(g, astar, tree, drones, towers):
             distance, path = astar(g,(source,source_index),(target,target_index))
             paths[(s,t)] = list(map(lambda x: (x[-2], x[-1]), path))
             dist_dict[(s, t)] = int(distance)
-        # Build distance matrix
+        # Build distance matrix ->
         matrix = []
         for x in range(len(locations) + 1):
             row = []
@@ -543,7 +543,7 @@ def vehicle_routing_problem(g, astar, tree, drones, towers):
     # TODO (2) Rewrite and make nicer
     def create_data_model(drones, towers):
         data = {}
-        data['distance_matrix'], data['path_cache'] =  compute_distance_matrix(drones, towers)
+        data['distance_matrix'], data['path_cache'] = compute_distance_matrix(drones, towers)
         data['num_vehicles'] = len(drones)
         data['num_locations'] = len(data['distance_matrix'])
         data['starts'] = list(range(data['num_vehicles'])) # Drones are first locations (change this later)

@@ -336,14 +336,28 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
         return file.read()
 
 
-
-
-
-    # ADDED JONAS EMIL
+# ADDED JONAS EMIL
     @app.route(prefix+"/drones")
     def drones():
         file = open("../leaflet/data/drones.json","r")
         return file.read()
+
+    @app.route(prefix+"/get_drone", methods=['GET'])
+    def get_drone():
+        uid = int(request.args.get('id'))
+
+        filePlans = open("../leaflet/data/drones.json", "r")
+        string = ""
+        for lines in filePlans.readlines():
+            string += lines
+        allDrones = json.loads(string)
+        filePlans.close()
+
+        if len(allDrones["DroneList"]) > 0:
+            for uuid in allDrones["DroneList"]:
+                if int(uuid["id"]) == uid:
+                    return json.dumps(uuid)
+        return "404"
 
     @app.route(prefix+"/faults")
     def faults():
@@ -446,15 +460,22 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
 
         return "200"
 
-    #END OF ADDED JONAS EMIL    
-
-
-
-    @app.route(prefix+"/marker")
-    def marker():
+    @app.route(prefix+"/favicon")
+    def favicon():
         from flask import send_file
-        return send_file("../leaflet/data/marker.png")
+        return send_file("../leaflet/data/favicon.ico")
 
+    @app.route(prefix+"/javascript")
+    def js():
+        file = open("../leaflet/script.js","r")
+        return file.read()
+
+    @app.route(prefix+"/stylesheet")
+    def css():
+        file = open("../leaflet/style.css","r")
+        return file.read()
+
+#END OF ADDED JONAS EMIL    
 
     class OpenThread(Thread):
         def run(self):
