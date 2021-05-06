@@ -93,7 +93,7 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
 
     start("Setting up the app")
     app = Flask("LiMiC")
-    CORS(app)
+    CORS(app)	# ADDED JONAS EMIL To prevent CORS errors
 
     @app.route(prefix+"/")
     def hello():
@@ -388,13 +388,17 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
                 if uid["id"] > highestID:
                     highestID = uid["id"]
             
-        plan = {"id": highestID + 1, "name": name, "active": False, "towers": selectedTowers, "done": False, "plan" : []}
+        plan = {"id": highestID + 1, "name": name, "active": False, "done": False, "plan" : []}
         for drone, data in vrp.items():
             if data['distance'] > 0: #the path should be added to the plan
+                towers = []
+                for coords in data["path"]:
+                    for tw in selectedTowers:
+                        if coords[0] == tw[2] and coords[1] == tw[1] and [tw[0],tw[1], tw[2]] not in towers:
+                            towers.append([tw[0], tw[1], tw[2]])
                 tmp_drone = {
                     "drone": int(drone),
-                    "distance": float(data['distance']),
-                    "path": data['path']
+                    "towers" : towers
                 }
                 plan["plan"].append(tmp_drone)
 

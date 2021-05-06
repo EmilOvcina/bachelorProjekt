@@ -113,7 +113,7 @@ $(document).ready(function() {
     map.getPane("routes").style.zIndex = 900;
     
     map.createPane("selectedTowers");
-    map.getPane("selectedTowers").style.zIndex = 850;
+    map.getPane("selectedTowers").style.zIndex = 920;
 
     googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', mapSettings);
 
@@ -358,6 +358,7 @@ function startVideoFeed() {
     document.getElementById("livefeedvideo_html5_api").setAttribute("controls", ""); //enables controls so the user can view the video in fullscreen
     videojs(document.getElementById("livefeedvideo")).play();
 }
+
 function stopVideoFeed() {
     videojs(document.getElementById("livefeedvideo")).pause();
 }
@@ -441,6 +442,29 @@ function route() {
     });
 } 
 
+function routeDroneToTowers(droneID, towers)
+{
+    var drns = [];  
+    var routePromises = [];
+    myLayer.removeLayer(routeLayer);
+    routeLayer = new L.GeoJSON().addTo(myLayer);
+    const coordinates_array = graphLayer.getLayers().map(l => l.getLatLng());
+    
+    var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[droneID].coords.y, drone_dict[droneID].coords.x));
+    var request = $.getJSON(host+"/tower",{'lat':nearest.lat,'lng':nearest.lng})
+        .done(function(data) {
+            drns.push([droneID+"", data.tower[0], data.tower[2], data.tower[1]]);
+    });
+    routePromises.push(request);
+
+    $.when.apply(null, routePromises).done(data => {
+        $.getJSON( host+"/vrp",{'drones':drns,'towers':towers})
+            .done(function(data) {
+                drawRoute(data[droneID]);     
+        });
+    });
+}
+
 function drawRoute(drone) {
     return new L.polyline(drone.path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(routeLayer);   
 }
@@ -496,24 +520,28 @@ function remove_plan(id) {
 function show_plan(id) {
     clearSelection();
     $.getJSON(host+"/get_plan", {"id" : id}).done(data => {
-        selectedTowers = data["towers"];
-        selectedTowers.forEach(tower => {
-            drawSelectedTowers(tower, true)
-        })
-
         droneplanshtml = "";
         droneCount = 0;
         droneCountIdle = 0;
+
+        selectedTowers = [];
         data["plan"].forEach(droneplan => {
-            drawRoute(droneplan)
+            routeDroneToTowers(droneplan["drone"], droneplan["towers"])
+            droneplan["towers"].forEach(tw => {
+                selectedTowers.push(tw)
+            })
             var workingStr = drone_dict[droneplan["drone"]]["isWorking"] == 0 ? "Idle" : "Working"; 
             if(workingStr == "Idle") {droneCountIdle += 1;}
             droneCount += 1;
             droneplanshtml += "<li onclick='animateToDrone("+droneplan["drone"]+")'> <p>Drone " + droneplan["drone"]+ ": "+ workingStr +"</p><p>Battery: " + drone_dict[droneplan["drone"]]["batteryPercentage"] + "%</p> </li>";
         });
 
+        selectedTowers.forEach(tower => {
+            drawSelectedTowers(tower, true)
+        })
+
         $("#showplanPopup h5").html(data["name"]);
-        $("#showplanPopup #planpopup_towers").html("<p>Towers: " + data["towers"].length + "</p>");
+        $("#showplanPopup #planpopup_towers").html("<p>Towers: " + selectedTowers.length + "</p>");
         $("#showplanPopup #planpopup_drones").html("<p>Drones: "+droneCountIdle+"/"+droneCount+"</p>");
         $("#showplanPopup ul").html(droneplanshtml);
 
