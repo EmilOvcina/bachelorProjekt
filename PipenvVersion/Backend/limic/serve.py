@@ -93,7 +93,7 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
 
     start("Setting up the app")
     app = Flask("LiMiC")
-    CORS(app)	# ADDED JONAS EMIL To prevent CORS errors
+    CORS(app)
 
     @app.route(prefix+"/")
     def hello():
@@ -341,6 +341,23 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
     def drones():
         file = open("../leaflet/data/drones.json","r")
         return file.read()
+
+    @app.route(prefix+"/get_drone", methods=['GET'])
+    def get_drone():
+        uid = int(request.args.get('id'))
+
+        filePlans = open("../leaflet/data/drones.json", "r")
+        string = ""
+        for lines in filePlans.readlines():
+            string += lines
+        allDrones = json.loads(string)
+        filePlans.close()
+
+        if len(allDrones["DroneList"]) > 0:
+            for uuid in allDrones["DroneList"]:
+                if int(uuid["id"]) == uid:
+                    return json.dumps(uuid)
+        return "404"
 
     @app.route(prefix+"/faults")
     def faults():
