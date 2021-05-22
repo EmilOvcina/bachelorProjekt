@@ -342,6 +342,11 @@ body {
   user-select: none; /* Standard */
 }
 
+#edit_btn {
+  margin-left: 0.5rem !important;
+  width: 89%;
+}
+
 @media(hover: hover) {
 #showplanPopup ul li:hover {
   background-color: var(--blueShadow200);

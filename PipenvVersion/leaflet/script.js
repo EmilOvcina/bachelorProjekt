@@ -93,6 +93,10 @@ var mapSettings = {
     unloadInvisibleTiles: true
 };
 
+/**
+ * Runs when the html has loaded. Initialises the objects and datastructures used for the application.
+ * Also loads and draws some of the elements on the map.
+ */
 $(document).ready(function() {
     map = new L.Map('map', {
         center: [55.94612, 10.48645],
@@ -123,6 +127,7 @@ $(document).ready(function() {
 
     //Used to fix bug, where some browsers register a click twice, only seems to happen here.
     TowerCanBeSelected = true;
+    // Loads in all the towers
     $.getJSON(host + "/graph", function(data) {
         graphLayer = L.geoJson(data, {
                 pointToLayer: function (feature, latlng) {
@@ -136,20 +141,20 @@ $(document).ready(function() {
 
             $.getJSON(host+"/tower",{'lat':lat,'lng':lng})
                 .done(function(data) {
-                if($("#showplanPopup").is(":visible")) {
-                    animateOutFromTop($("#showplanPopup"));
-                    clearSelection();
-                }
-                selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
-                drawSelectedTowers(data.tower, false);
-
-                $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
-                if(!$("#calculateRoutePopup").is(":visible"))  {
-                    animateInFromTop($("#calculateRoutePopup"));
-                }
-                if($("#addplanPopup").is(":visible")) { 
-                    clearRoute();
-                }
+                    selectedTowers.push([data.tower[0], data.tower[2], data.tower[1]]);
+                    drawSelectedTowers(data.tower, false);
+                    
+                    if($("#showplanPopup").is(":visible")) {
+                        animateOutFromTop($("#showplanPopup"));
+                        clearSelection();
+                    }
+                    $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
+                    if(!$("#calculateRoutePopup").is(":visible") && selectedTowers.length >= 1)  {
+                        animateInFromTop($("#calculateRoutePopup"));
+                    }
+                    if($("#addplanPopup").is(":visible")) { 
+                        clearRoute();
+                    }
             })
         }
         setTimeout(function() {
@@ -160,6 +165,7 @@ $(document).ready(function() {
         $("#map").css("margin-top", "0");
     });
     
+    //Loads in the no-zones
     $.getJSON(host+"/no_zone", function(data) {
         nozoneLayer = L.geoJson(data, {
                 style: no_zoneStyle
@@ -173,6 +179,7 @@ $(document).ready(function() {
     planRouteLayer = new L.LayerGroup().addTo(myLayer);
     faultsLayer = new L.GeoJSON(); 
     
+    // Loads the drones into an internal data structure.
     $.getJSON(host+"/drones", function(json) {
         json["DroneList"].forEach(function(droneEntry) {
             var drone = droneEntry["Drone"];
@@ -225,6 +232,7 @@ $(document).ready(function() {
 
     loadPlanList();
 
+    //Loads in the faults from the list of faulty towers.
     var fault_dict = [];
     $.getJSON( host + "/faults", function(json) {
         json["FaultList"].forEach(function(faultEntry) {
@@ -263,22 +271,20 @@ $(document).ready(function() {
     //ensure that we zoom in far enough to render the towers, such that we don't get overwhelmed with tower markers that we dont care about
     map.on('zoomend' , function (e) {
         var geo = map.getCenter();
-        if (map.getZoom() > zoomThreshold && towerrender)
-        {
+        if (map.getZoom() > zoomThreshold && towerrender) {
             $("#sidepanel ul li p").fadeOut(0);
             myLayer.addLayer(graphLayer);
-            // myLayer.addLayer(selectTowerLayer);
             myLayer.addLayer(faultsLayer);
         }else {
             if(towerrender == 1) {
                 $("#sidepanel ul li p").fadeIn(0);
             }
             myLayer.removeLayer(graphLayer);
-            // myLayer.removeLayer(selectTowerLayer);
             myLayer.removeLayer(faultsLayer);
         }
     });
 
+    // Defines what happens when a selected tower is clicken on.
     selectTowerLayer.on("click", function(e) {
         var lat = e.layer._latlng.lat;
         var lng = e.layer._latlng.lng;
@@ -286,6 +292,7 @@ $(document).ready(function() {
             .done(function(data) {
             selectedTowers = selectedTowers.filter(function( obj ) { return obj[0] !== data.tower[0]; });
             selectTowerLayer.removeLayer(e.layer);
+
             if($("#calculateRoutePopup").is(":visible") && selectedTowers.length < 1)  {
                 animateOutFromTop($("#calculateRoutePopup"));
             } 
@@ -295,7 +302,13 @@ $(document).ready(function() {
             if($("#showplanPopup").is(":visible")) {
                 clearSelection();
             }
-            $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
+            if(selectedTowers.length >= 1) {
+                $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
+            } else {
+                animateOutFromTop($("#calculateRoutePopup"));
+                $("#addplanPopup input").val("");
+                clearSelection();
+            }
         })
     });
 })
@@ -363,6 +376,9 @@ function stopVideoFeed() {
     videojs(document.getElementById("livefeedvideo")).pause();
 }
 
+/**
+ * Clears the selected towers and removes the route on the map.
+ */
 function clearSelection() { 
     if(selectedTowers.length > 0) {
         selectedTowers = [];
@@ -374,7 +390,8 @@ function clearSelection() {
         if($("#addplanPopup").is(":visible")) {
             animateOutFromTop($("#addplanPopup"));
         }
-    
+        $("#addplanPopup input").val("");
+        
         selectTowerLayer.on("click", function(e) {
             var lat = e.layer._latlng.lat;
             var lng = e.layer._latlng.lng;
@@ -385,6 +402,7 @@ function clearSelection() {
 
                 if($("#calculateRoutePopup").is(":visible") && selectedTowers.length < 1)  {
                     animateOutFromTop($("#calculateRoutePopup"));
+                    clearSelection();
                 }
                 if($("#addplanPopup").is(":visible")) {
                     clearRoute();
@@ -392,12 +410,21 @@ function clearSelection() {
                 if($("#showplanPopup").is(":visible")) {
                     clearSelection();
                 }
-                $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
+                if(selectedTowers.length >= 1) {
+                    $("#calculateRoutePopup > p").html("Towers: " + selectedTowers.length);
+                } else {
+                    clearSelection();
+                    $("#addplanPopup input").val("");
+                    animateOutFromTop($("#calculateRoutePopup"));
+                }
             })
         });
     }
 }
 
+/**
+ * Used to calculate routes from all the enabled drones to all the selected towers
+ */
 function route() {
     var drns = [];  
     var routePromises = [];
@@ -407,9 +434,9 @@ function route() {
 
     var length = (Object.keys(drone_dict).length);
 
+    //Finds the tower closest to each drone
     for(var i = 0; i < length; i++) {
         let id = drone_dict[i].id;
-
         if(activated_drones.includes(id)) {
             var nearest = L.GeometryUtil.closest(map, coordinates_array, new L.LatLng(drone_dict[i].coords.y, drone_dict[i].coords.x));
             var request = $.getJSON(host+"/tower",{'lat':nearest.lat,'lng':nearest.lng})
@@ -421,6 +448,7 @@ function route() {
         }
     }
 
+    // Called after all the towers has been fetched from LiMiC. This calculated the route.
     $.when.apply(null, routePromises).done(data => {
         if(drns.length > 0) {
             $.getJSON( host+"/vrp",{'drones':drns,'towers':selectedTowers})
@@ -442,6 +470,9 @@ function route() {
     });
 } 
 
+/**
+ * Routes from one drone to a list of towers. This is used when displaying a plan, where a drone might have moved since start of plan.
+ */
 function routeDroneToTowers(droneID, towers)
 {
     var drns = [];  
@@ -465,16 +496,25 @@ function routeDroneToTowers(droneID, towers)
     });
 }
 
+/**
+ * Draws the actual line corresponding to a route.
+ */
 function drawRoute(drone) {
     return new L.polyline(drone.path, {color: '#0ba5a5', opacity: 1, weight: 8, pane: "routes"}).addTo(routeLayer);   
 }
 
+/**
+ * Draws the green circle indicating that a tower has been selected. 
+ */
 function drawSelectedTowers(tower, changeOrder) {
     if(changeOrder) 
         return new L.circleMarker([tower[2], tower[1]], selectStyle).addTo(selectTowerLayer);
     return new L.circleMarker([tower[1], tower[2]], selectStyle).addTo(selectTowerLayer);
 }
 
+/**
+ * Loads all the plans from the JSON file, and divides them into the three categories
+ */
 function loadPlanList() {
     $("#active_plans_folder .plans_folder_dropdown > ul").html("");
     $("#idle_plans_folder .plans_folder_dropdown > ul").html("");
@@ -493,6 +533,9 @@ function loadPlanList() {
     });
 }
 
+/**
+ * Changes a plan by sending a request to LiMiC, this activates a plan
+ */
 function activate_plan(id) {
     clearSelection();
     animateOutFromTop($("#showplanPopup"));
@@ -505,6 +548,9 @@ function activate_plan(id) {
     });
 }
 
+/**
+ * Deletes a plan by sending a request to LiMiC.
+ */
 function remove_plan(id) {
     clearSelection();
     animateOutFromTop($("#showplanPopup"));
@@ -517,6 +563,9 @@ function remove_plan(id) {
     });
 }
 
+/**
+ * Opens the pop-up displaying all the information about the plan. Also draws the plan on the map.
+ */
 function show_plan(id) {
     clearSelection();
     $.getJSON(host+"/get_plan", {"id" : id}).done(data => {
@@ -547,15 +596,29 @@ function show_plan(id) {
 
         if(data["active"] || data["done"] || droneCountIdle != droneCount) {
             $("#showplanPopup #activate_btn").fadeOut(0);
+            $("#showplanPopup #edit_btn").fadeOut(0);
             $("#showplanPopup #remove_btn").css("margin", "0 0 0.5rem 0.5rem");
         } else {
+            $("#showplanPopup #edit_btn").fadeIn(0);
             $("#showplanPopup #activate_btn").fadeIn(0);
             $("#showplanPopup #remove_btn").css("margin", "");
             $("#showplanPopup #activate_btn").attr("onclick", "activate_plan("+ id +")");   
+            $("#showplanPopup #edit_btn").attr("onclick", "edit_plan(\""+ data["name"] +"\", "+ selectedTowers.length +")");   
         }
         $("#showplanPopup #remove_btn").attr("onclick", "remove_plan("+ id +")");
         animateInFromTop($("#showplanPopup"));
     })
+}
+
+/**
+ *  Edits a single plan. Returns the user to selection-mode with all the plan's towers selected.
+ */
+function edit_plan(name, towers) {
+    clearRoute();
+    animateOutFromTop($("#showplanPopup"));
+    $("#addplanPopup input").val(name);
+    if($("#plans").is(":visible")) { animateOut($("#plans")); }
+    $("#calculateRoutePopup > p").html("Towers: " + towers);
 }
 
 function loadDronePanel()
@@ -587,6 +650,9 @@ function toggleDrone(droneID)
     loadDronePanel();
 }
 
+/**
+ * Removes duplicates in an array list
+ */
 function uniq(a) {
     var uniID = [];
     var unArr = [];
@@ -617,6 +683,9 @@ function uniq(a) {
     });
 })()     
 
+/**
+ * Uses JQuery to animate in an object from the left to the right.
+ */
 function animateIn(object) 
 {
     object.fadeIn(0);
@@ -625,6 +694,9 @@ function animateIn(object)
     }, animationSpeed);
 }
 
+/**
+ * Uses JQuery to animate out an object from the right to the left.
+ */
 function animateOut(object) 
 {
     object.animate({
@@ -634,6 +706,9 @@ function animateOut(object)
     });
 }
 
+/**
+ * Uses JQuery to animate in an object from the top.
+ */
 function animateInFromTop(object) 
 {
     object.fadeIn(0);
@@ -642,6 +717,9 @@ function animateInFromTop(object)
     }, animationSpeed);
 }
 
+/**
+ * Uses JQuery to animate out an object, in an upwards motion.
+ */
 function animateOutFromTop(object) 
 {
     object.fadeIn(0);
@@ -652,11 +730,17 @@ function animateOutFromTop(object)
     });
 }
 
+/**
+ * Pans the center of the map to a drone.
+ */
 function animateToDrone(droneID) {
 
     map.panTo(new L.LatLng(drone_dict[droneID]['coords']['y'], drone_dict[droneID]['coords']['x']), {animate: true, duration: (animationSpeed/1000)});
 }
 
+/**
+ * Removes the drawn route, but keeps the selected towers.
+ */
 function clearRoute()
 {
     myLayer.removeLayer(routeLayer);
@@ -665,6 +749,9 @@ function clearRoute()
     animateInFromTop($("#calculateRoutePopup"));  
 }
 
+/**
+ * Used to remove the displaying plan.
+ */
 function clearSelectionPlan() {
     if($("#showplanPopup").is(":visible")) {
         animateOutFromTop($("#showplanPopup"));
@@ -672,6 +759,9 @@ function clearSelectionPlan() {
     }
 }
 
+/**
+ * Opens the dropdown to reveal plans under each category in the plans menu.
+ */
 function openPlansFolder(folder) {
     $("#plans_wrapper").css("max-height", ($("body").height() - 24 - $("#plans .popup_header").height() ));
     if(!active_folder && folder == "active") {
@@ -703,6 +793,9 @@ function openPlansFolder(folder) {
     }
 }
 
+/**
+ * Removes all menus from the left side of the screen.
+ */
 function clearSidePanel()
 {
     let a = ControlPanelCanBeRemoved;
@@ -736,16 +829,23 @@ function clearSidePanel()
     $(".bi-card-checklist path:nth-child(1n + 2)").css("animation-iteration-count", "0");
 }
 
+/**
+ * Clears both the side panels and the displaying plan.
+ */
 function clearSidePanelPlans() {
     clearSelectionPlan();
     clearSidePanel();
 }
 
+/**
+ * Loads when all the html has loaded. Used for defining animations.
+ */
 $(document).ready(function() {
     $("#addplanPopup").css("top", "-"+$("#addplanPopup").height())
     $("#calculateRoutePopup").css("top", "-"+$("#calculateRoutePopup").height())
     $("#showplanPopup").css("top", "-"+$("#showplanPopup").height())
 
+    // droneicon animation
     $("#droneicon").click(()=> {
         clearSidePanel();
         if(!$("#drone_panel").is(":visible")) {   
@@ -764,6 +864,7 @@ $(document).ready(function() {
         }
     });
 
+    //Cog animation
     $("#layerVisIcon").click(()=> {
         clearSidePanel();
         if(!$("#layerVis").is(":visible")) {
@@ -774,6 +875,7 @@ $(document).ready(function() {
         }
     });
 
+    //Plans animation
     $(".bi-card-checklist").click(()=> {
         clearSidePanel();
         if(!$("#plans").is(":visible")) {
@@ -785,6 +887,7 @@ $(document).ready(function() {
         clearSelectionPlan();
     });
 
+    //On and off buttons off the setting menu.
     striOn="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8z";
     striOff="M11 4a4 4 0 0 1 0 8H8a4.992 4.992 0 0 0 2-4 4.992 4.992 0 0 0-2-4h3zm-6 8a4 4 0 1 1 0-8 4 4 0 0 1 0 8zM0 8a5 5 0 0 0 5 5h6a5 5 0 0 0 0-10H5a5 5 0 0 0-5 5z";
     $('#layerVisTower').click(function() {
@@ -805,7 +908,8 @@ $(document).ready(function() {
             $(this).find("path").attr("d", striOn);
         }
     });
-        
+    
+    // Creates the toggles for each button in the settings menu.
     $('#layerVisRoute').click(function() {
         if(routerender == 1) {
             myLayer.removeLayer(routeLayer);
@@ -842,6 +946,7 @@ $(document).ready(function() {
         }
     });
 
+    // Add plan button
     $("#addplanPopup button").click(function() {
         if ($('#addplanPopup input').val().length > 0) {
             $.ajax({

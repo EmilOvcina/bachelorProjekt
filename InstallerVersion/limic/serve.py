@@ -387,7 +387,9 @@ def serve(g,nodes,astar,html_file,host="localhost",port=5000,prefix="",url=None,
             for uid in allPlans["PlanList"]:
                 if uid["id"] > highestID:
                     highestID = uid["id"]
-            
+                if uid["name"] == name and uid['active'] == False and uid['done'] == False:
+                    allPlans["PlanList"] = list(filter(lambda x: x['id'] != uid['id'], allPlans["PlanList"]))
+
         plan = {"id": highestID + 1, "name": name, "active": False, "done": False, "plan" : []}
         for drone, data in vrp.items():
             if data['distance'] > 0: #the path should be added to the plan
