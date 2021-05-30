@@ -177,7 +177,7 @@ $(document).ready(function() {
     droneLayer = new L.LayerGroup().addTo(myLayer);
     routeLayer = new L.LayerGroup().addTo(myLayer);
     planRouteLayer = new L.LayerGroup().addTo(myLayer);
-    faultsLayer = new L.GeoJSON(); 
+    faultsLayer = new L.GeoJSON();
     
     // Loads the drones into an internal data structure.
     $.getJSON(host+"/drones", function(json) {
@@ -203,6 +203,11 @@ $(document).ready(function() {
         RefreshDronesOnInterval(3 * 1000);
     });
 
+    /*
+    * Refreshes the drone every "delay" milliseconds, using the Lodash library (seen as the underscore '_' in the code) to perform comparison of objects.
+    * The marker attribute is omitted from this comparison since it does not exist on the back-end since it's added client-side and the comparison will therefore otherwise fail.
+    * If the drone contains new data it is overwritten with the new data and its position, and the marker is also moved accordingly to move its position on the map.
+    */
     async function RefreshDronesOnInterval(delay) { 
         setInterval(function() {
             $.getJSON(host+"/drones", function(json) {
@@ -220,8 +225,6 @@ $(document).ready(function() {
                                 y: drone["coords"]["y"],
                             }
                         };
-                        var lat = (oldmarker.data.coords.x);
-                        var lng = (oldmarker.data.coords.y);
                         var newLatLng = new L.LatLng(drone["coords"]["y"], drone["coords"]["x"]);
                         drone_dict[drone["id"]].marker.setLatLng(newLatLng);
                     }
@@ -246,21 +249,23 @@ $(document).ready(function() {
             fault_dict[fault["id"]].marker.on('click', faultClickFunction);
             fault_dict[fault["id"]].marker.data = fault_dict[fault["id"]];
         });
-    }).done(function() { // TODO write comment
-        //RefreshDronesOnInterval(3 * 1000); //amount of time in milliseconds
+    }).done(function() {
+        // A method can be called here which would refresh all the faults on an interval and therefore load new faults as they are discovered, similarly to the drone refresh function.
+        // The delay between loading new faults should likely not be small since it is assumed that it is very unlikely to find new faults and the requests are therefore unnecessary.
+        //RefreshFaultsOnInterval(1800 * 1000); //amount of time in milliseconds
     });
 
     /*
-    * The trick with the next two functions is that when you click a drone it will execute the drone layer function which shows the drone info panel, however the map click function
+    * The trick is that when you click a drone it will execute the drone layer function which shows the drone info panel, however the map click function
     * will also execute and immediately remove the panel (because its meant to remove the panel when you click away from the drone, but clicking ON the drone also executes this,
     * unfortunately. The solution is to have a canBeRemoved boolean set to false when the popup is displayed and changing it back to true after some delay (here 200ms) which means
     * it will change back AFTER the map function has executed, thus preventing it from removing it in the first place)
     */       
     map.on("click", function (e) { 
-            if (ControlPanelCanBeRemoved) {
-                stopVideoFeed();
-            } 
-            clearSidePanel();
+        if (ControlPanelCanBeRemoved) {
+            stopVideoFeed();
+        } 
+        clearSidePanel();
     });
 
     //set view of Denmark initially upon launch
@@ -284,7 +289,7 @@ $(document).ready(function() {
         }
     });
 
-    // Defines what happens when a selected tower is clicken on.
+    // Defines what happens when a selected tower is clicked on.
     selectTowerLayer.on("click", function(e) {
         var lat = e.layer._latlng.lat;
         var lng = e.layer._latlng.lng;
@@ -313,6 +318,7 @@ $(document).ready(function() {
     });
 })
 
+//Loads the user interface with the image slider which loads the images associated with the specific fault from a URL once a fault is clicked on, on the map.
 function faultClickFunction(e) { 
     clearSidePanel();
     clearSelection();
@@ -340,6 +346,7 @@ function faultClickFunction(e) {
     }, 200);
 }
 
+//Loads the user interface with the 'drone live-feed' and information regarding the drone.
 function droneClickFunction(e) { 
     clearSidePanel();
     feature = e.target;
@@ -362,6 +369,7 @@ function droneClickFunction(e) {
     }, 300);
 }  
 
+//Starts the m3u8 video. The 'type' parameter may have to been edited too if using other media formats.
 function startVideoFeed() {
     videojs(document.getElementById("livefeedvideo")).src({
         type: 'application/x-mpegURL',
@@ -372,13 +380,15 @@ function startVideoFeed() {
     videojs(document.getElementById("livefeedvideo")).play();
 }
 
+/* 
+* Stops the video-feed (well, it is paused in reality). 
+* Important to call this when hiding the video since it would otherwise continue to be streamed and consume bandwidth depending on implementation.
+*/
 function stopVideoFeed() {
     videojs(document.getElementById("livefeedvideo")).pause();
 }
 
-/**
- * Clears the selected towers and removes the route on the map.
- */
+//Clears the selected towers and removes the route on the map.
 function clearSelection() { 
     if(selectedTowers.length > 0) {
         selectedTowers = [];
